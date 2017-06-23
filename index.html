@@ -6,21 +6,17 @@ body {
     display: flex;
     margin: 0;
     padding: 0;
+    justify-content: center;
 }
-/*body > * {
-    flex: 1;
-}*/
 #players {
     width: 100px;
 }
+#canvas {
+    width: 100%;
+    border: 1px solid black;
+}
 #chat {
     width: 300px;
-}
-#drawing {
-    flex-grow: 1;
-}
-#canvas {
-    width: 100%
 }
 </style>
 <script src="main.js"></script>
@@ -31,7 +27,7 @@ window.onresize = window.onload = function () {
     var sw = (id, w) => document.getElementById(id).style.width = w + 'px';
     var sh = (id, h) => document.getElementById(id).style.height = h + 'px';
     if (h > w) can.style.width = w + 'px';
-    else can.style.width = h - 4 + 'px'; // I have no idea where 4 comes from...
+    else can.style.width = h - 4 - 2 + 'px'; // I have no idea where 4 comes from...
 }
 </script>
 </head>
