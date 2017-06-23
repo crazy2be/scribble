@@ -1,5 +1,6 @@
 window.addEventListener('load', function() {
     var sock = new WebSocket('ws://' + location.hostname + ':8001')
+    var lastPoint = null;
     sock.onmessage = function (ev) {
         console.log("Got msg", ev.data);
         switch (ev.data[0]) {
@@ -21,8 +22,13 @@ window.addEventListener('load', function() {
             break;
         case 'd':
             var [x, y] = ev.data.slice(1).split(',', 2).map(s => parseInt(s));
-            var ctx = canvas.getContext('2d');
-            ctx.fillRect(x, y, 1, 1);
+            if (lastPoint) {
+                var ctx = canvas.getContext('2d');
+                ctx.moveTo(lastPoint.x, lastPoint.y);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+            lastPoint = {x: x, y: y};
             break;
         default:
             chat.innerText += "Unhandled message '" + ev.data + "'.";
