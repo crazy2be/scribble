@@ -51,13 +51,15 @@ window.addEventListener('load', function() {
         sock.send('test');
         sock.send('nTrump');
     };
-    canvas.onmousedown = function () {
+    canvas.onmousedown = function (ev) {
         canvas.onmousemove = function (ev) {
             var x = ~~((ev.clientX - canvas.offsetLeft) / (canvas.offsetWidth / canvas.width));
             var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
             sock.send('d' + x + ',' + y);
         }
         sock.send('tpen');
+        ev.preventDefault();
+        return false;
     };
     canvas.onmouseup = function () {
         canvas.onmousemove = null;
