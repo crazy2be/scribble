@@ -19,6 +19,11 @@ window.addEventListener('load', function() {
             var div = document.getElementById("player" + id);
             div.parentNode.removeChild(div);
             break;
+        case 'd':
+            var [x, y] = ev.data.slice(1).split(',', 2).map(s => parseInt(s));
+            var ctx = canvas.getContext('2d');
+            ctx.fillRect(x, y, 1, 1);
+            break;
         default:
             chat.innerText += "Unhandled message '" + ev.data + "'.";
             break;
@@ -28,4 +33,14 @@ window.addEventListener('load', function() {
         sock.send('test');
         sock.send('nTrump');
     };
+    canvas.onmousedown = function () {
+        canvas.onmousemove = function (ev) {
+            var x = ~~((ev.clientX - canvas.offsetLeft) / (canvas.offsetWidth / canvas.width));
+            var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
+            sock.send('d' + x + ',' + y);
+        }
+    };
+    canvas.onmouseup = function () {
+        canvas.onmousemove = null;
+    }
 });
