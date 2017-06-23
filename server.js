@@ -84,4 +84,7 @@ var server = ws.createServer(function (conn) {
         delete players[my_id];
         broadcast('q' + my_id);
     })
+    conn.on("error", function (err) {
+        console.log("Error (probably doesn't matter):", err);
+    });
 }).listen(8001)
