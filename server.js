@@ -22,14 +22,66 @@ function handler(req, res) {
 }
  
 console.log("Testing");
-// Scream server example: "hi" -> "HI!!!" 
+// For now, only one game. Easy to change.
+var current_word = "chicken";
+var player_id = 0;
+var players = {};
+var broadcast = (msg) => {
+    console.log("Broadcasting ", msg,
+        Object.keys(players).reduce(
+            (newObj, id) => {
+                newObj[id] = {
+                    name: players[id].name,
+                    score: players[id].score};
+                return newObj}, {}));
+    for (var id in players) { players[id].conn.sendText(msg) }};
 var server = ws.createServer(function (conn) {
+    // Protocol: First letter denotes type of message
+    //  nTrump
+    // Sets your name and joins the game.
+    //  p543,Trump
+    // Signifies a new player has joined, with id 543 and name Trump
+    //  q543
+    // Player id 543 has quit
+    //  cA message
+    // Is a chat message / guess
+    //  wchicken
+    // Is a word for the drawer to draw
+    //  d257,543
+    // Is a mouse move / draw command
+    //  tbrush
+    // Changes the tool that is used in draw commands.
     console.log("New connection")
+    var my_id = player_id++;
+    players[my_id] = {
+        conn: conn,
+        name: "Anon",
+        score: 0,
+    };
     conn.on("text", function (str) {
         console.log("Received "+str)
-        conn.sendText(str.toUpperCase()+"!!!")
+        switch (str[0]) {
+        case 'n':
+            var name = str.slice(1).replace(/,/g, '');
+            players[my_id].name = name;
+            broadcast('p' + my_id + ',' + name);
+            broadcast('c' + name + ' has joined!');
+        case 'c':
+            var guess = str.slice(1);
+            if (guess.toLowerCase() == current_word.toLowerCase()) {
+                console.log("Win!");
+                broadcast("cWinner!");
+            } else {
+                broadcast(str);
+            }
+            break;
+        case 'd': case 't': broadcast(str); break;
+        default: broadcast('cUnhandled message "' + str + '", ignoring.'); break;
+        }
     })
     conn.on("close", function (code, reason) {
         console.log("Connection closed")
+        delete players[my_id];
+        broadcast('q' + my_id);
     })
 }).listen(8001)
