@@ -2,8 +2,38 @@
 <html>
 <head>
 <style>
-
+body {
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+/*body > * {
+    flex: 1;
+}*/
+#players {
+    width: 100px;
+}
+#chat {
+    width: 300px;
+}
+#drawing {
+    flex-grow: 1;
+}
+#canvas {
+    width: 100%
+}
 </style>
+<script src="main.js"></script>
+<script>
+window.onresize = window.onload = function () {
+    var can = document.getElementById('canvas');
+    var w = can.innerWidth, h = window.innerHeight;
+    var sw = (id, w) => document.getElementById(id).style.width = w + 'px';
+    var sh = (id, h) => document.getElementById(id).style.height = h + 'px';
+    if (h > w) can.style.width = w + 'px';
+    else can.style.width = h - 4 + 'px'; // I have no idea where 4 comes from...
+}
+</script>
 </head>
 <body>
 <div id="players">
@@ -11,7 +41,12 @@
     <div class="player">Potato Chip</div>
     <div class="player">Checkmark</div>
 </div>
-<canvas id="canvas"></canvas>
+<div id="drawing">
+<canvas id="canvas" width="200" height="200"></canvas>
+<div id="palette">
+<!-- TODO: Add colors and shit here -->
+</div>
+</div>
 <div id="chat">
 
 </div>
