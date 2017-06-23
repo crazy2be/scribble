@@ -1,6 +1,7 @@
 window.addEventListener('load', function() {
     var sock = new WebSocket('ws://' + location.hostname + ':8001')
     var lastPoint = null;
+    var curTool = 'none';
     sock.onmessage = function (ev) {
         console.log("Got msg", ev.data);
         switch (ev.data[0]) {
@@ -30,6 +31,17 @@ window.addEventListener('load', function() {
             }
             lastPoint = {x: x, y: y};
             break;
+        case 't':
+            var tool = ev.data.slice(1);
+            if (tool == 'none') {
+                lastPoint = null;
+            } else if (tool == 'pen') {
+            } else {
+                chat.innerText += "Unknown tool '" + tool + "'.";
+                break;
+            }
+            curTool = tool;
+            break;
         default:
             chat.innerText += "Unhandled message '" + ev.data + "'.";
             break;
@@ -45,8 +57,10 @@ window.addEventListener('load', function() {
             var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
             sock.send('d' + x + ',' + y);
         }
+        sock.send('tpen');
     };
     canvas.onmouseup = function () {
         canvas.onmousemove = null;
+        sock.send('tnone');
     }
 });
