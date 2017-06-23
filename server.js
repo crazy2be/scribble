@@ -63,6 +63,9 @@ var server = ws.createServer(function (conn) {
         switch (str[0]) {
         case 'n':
             var name = str.slice(1).replace(/,/g, '');
+            for (var id in players) {
+                conn.sendText('p' + id + ',' + players[id].name);
+            }
             players[my_id].name = name;
             broadcast('p' + my_id + ',' + name);
             broadcast('c' + name + ' has joined!');
