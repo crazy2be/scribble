@@ -24,6 +24,16 @@ Array.prototype.random = function () {
   return this[Math.floor((Math.random()*this.length))];
 }
 
+function throttle(fn, threshhold) {
+  var last = 0;
+  return function () {
+    var now = Date.now();
+    if (now < last + (threshhold || 500)) return;
+    last = now;
+    return fn.apply(null, arguments);
+  };
+}
+
 function randomWord() {
     return 'apple'; // for testing
     // TODO: could be a larger word list. Other languages.
@@ -62,6 +72,7 @@ var server = ws.createServer(function (conn) {
     // Changes the tool that is used in draw commands.
     console.log("New connection")
     var my_id = -1;
+    var print_not_your_turn = throttle(() => conn.sendText("c0,Not your turn to draw!"));
     conn.on("text", function (str) {
         console.log("Received "+str)
         switch (str[0]) {
@@ -113,10 +124,7 @@ var server = ws.createServer(function (conn) {
             break;
         case 'd': case 't':
             if (my_id != drawing_player_id) {
-                // TODO: We should really throttle this, it is very annoying if
-                // you accidentally try to draw (blows away all chat logs).
-                // Sending once per second should be sufficient.
-                conn.sendText("c0,Not your turn to draw!");
+                print_not_your_turn();
                 return;
             }
             drawing.push(str);
