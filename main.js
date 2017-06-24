@@ -57,7 +57,9 @@ window.addEventListener('load', function() {
     }
     sock.onopen = function () {
         sock.send('test');
-        sock.send('nTrump');
+        // Feature credit goes to mitboii for suggestion this mathematically
+        // optimal name selection algorithm.
+        sock.send('n' + ((Math.random() > 0.5) ? "boii" : "noboii"));
     };
     canvas.onmousedown = function (ev) {
         canvas.onmousemove = function (ev) {
