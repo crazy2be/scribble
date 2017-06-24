@@ -21,6 +21,9 @@ body {
 </style>
 <script src="main.js"></script>
 <script>
+// This code is a hack, in order to try and get the canvas to not be too tall
+// for the viewport. I am told this is basically impossible to do in CSS,
+// if you can figure out a way be my guest :).
 window.onresize = window.onload = function () {
     var can = document.getElementById('canvas');
     var w = can.innerWidth, h = window.innerHeight;
