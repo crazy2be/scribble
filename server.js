@@ -113,6 +113,9 @@ var server = ws.createServer(function (conn) {
             break;
         case 'd': case 't':
             if (my_id != drawing_player_id) {
+                // TODO: We should really throttle this, it is very annoying if
+                // you accidentally try to draw (blows away all chat logs).
+                // Sending once per second should be sufficient.
                 conn.sendText("c0,Not your turn to draw!");
                 return;
             }
