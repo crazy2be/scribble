@@ -21,7 +21,7 @@ window.addEventListener('load', function() {
             var div = document.createElement("div");
             div.className = "player";
             div.id = "player" + id;
-            div.innerText = name;
+            div.innerText = id + ' ' + name;
             players.appendChild(div);
             break;
         case 'q':
