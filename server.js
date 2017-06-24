@@ -21,11 +21,26 @@ function handler(req, res) {
     });
 }
  
-console.log("Testing");
+Array.prototype.random = function () {
+  return this[Math.floor((Math.random()*this.length))];
+}
+
+function randomWord() {
+    return 'apple'; // for testing
+    // TODO: could be a larger word list. Other languages.
+    return ["apple", "pepper", "chicken", "potato", "neuken", "keuken"].random();
+}
+
 // For now, only one game. Easy to change.
-var current_word = "chicken";
+var current_word = randomWord();
+var current_hint = 'NO'; // TODO
+console.log("Testing", current_word);
 var player_id = 10;
+var drawing_player_id = -1;
 var players = {};
+// The server has to store a copy of the drawing
+// in case someone joins part way through.
+var drawing = [];
 var broadcast = (msg) => {
     console.log("Broadcasting ", msg,
         Object.keys(players).reduce(
@@ -45,7 +60,7 @@ var server = ws.createServer(function (conn) {
     // Player id 543 has quit
     //  cA message
     // Is a chat message / guess
-    //  wchicken
+    //  wdraw,chicken
     // Is a word for the drawer to draw
     //  d257,543
     // Is a mouse move / draw command
@@ -69,19 +84,34 @@ var server = ws.createServer(function (conn) {
             for (var id in players) {
                 conn.sendText('p' + id + ',' + players[id].name);
             }
+            drawing.forEach((msg) => conn.sendText(msg));
             players[my_id].name = name;
+            if (drawing_player_id < 0) {
+                drawing_player_id = my_id;
+                conn.sendText('wdraw,' + current_word);
+            } else {
+                conn.sendText('whint,' + current_hint);
+            }
             broadcast('p' + my_id + ',' + name);
             broadcast('c' + name + ' has joined!');
         case 'c':
             var guess = str.slice(1);
-            if (guess.toLowerCase() == current_word.toLowerCase()) {
-                console.log("Win!");
-                broadcast("c0,Winner!");
+            if ((guess.toLowerCase() == current_word.toLowerCase()) && (my_id != drawing_player_id)) {
+                broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
+                drawing = [];
+                drawing_player_id = Object.keys(players).random();
+                current_word = randomWord();
+                current_hint = current_word.replace(/[a-zA-Z]/g, "_");
+                players[drawing_player_id].conn.sendText('wdraw,' + current_word);
+                for (var id in players) {
+                    if (id == drawing_player_id) continue;
+                    players[id].conn.sendText('wguess,' + current_hint);
+                }
             } else {
                 broadcast('c' + my_id + ',' + guess);
             }
             break;
-        case 'd': case 't': broadcast(str); break;
+        case 'd': case 't': drawing.push(str); broadcast(str); break;
         default: broadcast('cUnhandled message "' + str + '", ignoring.'); break;
         }
     })

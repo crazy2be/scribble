@@ -50,6 +50,20 @@ window.addEventListener('load', function() {
             }
             curTool = tool;
             break;
+        case 'w':
+            var [role, word] = ev.data.slice(1).split(',', 2);
+            // Hmm... Should I do this a better way. Probably.
+            if (role == 'draw' || role == 'guess') {
+                var ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            switch (role) {
+                case 'draw': log("Draw " + word + "!"); break;
+                case 'guess': log("Guess " + word.split('').join(' ') + "!"); break;
+                case 'hint': log("Hint " + word.split('').join(' ') + '!'); break;
+                default: log("WARNING, UNKNOWN ROLE '" + role + "'"); break;
+            }
+            break;
         default:
             log("Unhandled message '" + ev.data + "'.");
             break;
