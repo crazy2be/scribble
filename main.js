@@ -2,11 +2,19 @@ window.addEventListener('load', function() {
     var sock = new WebSocket('ws://' + location.hostname + ':8001')
     var lastPoint = null;
     var curTool = 'none';
+    var log = function(...msg) {
+        var div = document.createElement('div');
+        div.className = 'chat-message';
+        div.innerText = msg.join(' ');
+        document.getElementById('chat-messages').appendChild(div);
+    }
+    log('test');
     sock.onmessage = function (ev) {
         console.log("Got msg", ev.data);
         switch (ev.data[0]) {
         case 'c':
-            chat.innerText += ev.data.slice(1) + '\n';
+            var [id, msg] = ev.data.slice(1).split(',', 2);
+            log(id, msg);
             break;
         case 'p':
             var [id, name] = ev.data.slice(1).split(',', 2);
@@ -37,13 +45,13 @@ window.addEventListener('load', function() {
                 lastPoint = null;
             } else if (tool == 'pen') {
             } else {
-                chat.innerText += "Unknown tool '" + tool + "'.";
+                log("Unknown tool '" + tool + "'.");
                 break;
             }
             curTool = tool;
             break;
         default:
-            chat.innerText += "Unhandled message '" + ev.data + "'.";
+            log("Unhandled message '" + ev.data + "'.");
             break;
         }
     }
@@ -64,5 +72,13 @@ window.addEventListener('load', function() {
     canvas.onmouseup = function () {
         canvas.onmousemove = null;
         sock.send('tnone');
-    }
+    };
+    var guess = document.querySelector('#chat-input textarea');
+    guess.onkeypress = function(ev) {
+        if (ev.keyCode == 13) {
+            sock.send('c' + guess.value);
+            guess.value = '';
+            return false;
+        }
+    };
 });

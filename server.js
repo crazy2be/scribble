@@ -75,7 +75,7 @@ var server = ws.createServer(function (conn) {
                 console.log("Win!");
                 broadcast("cWinner!");
             } else {
-                broadcast(str);
+                broadcast('c' + my_id + ',' + guess);
             }
             break;
         case 'd': case 't': broadcast(str); break;
