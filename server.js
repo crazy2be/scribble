@@ -5,9 +5,8 @@ var fs = require('fs')
 var app = http.createServer(handler)
 var port = Number(process.env.PORT || 8000);
 app.listen(port, function() {
-  console.log("Listening on " + port);
+  console.log("Ready at http://localhost:" + port + "/index.html");
 });
-
 
 function handler(req, res) {
     fs.readFile(__dirname + req['url'], function(err, data) {
@@ -33,23 +32,18 @@ function randomWord() {
 
 // For now, only one game. Easy to change.
 var current_word = randomWord();
-var current_hint = 'NO'; // TODO
-console.log("Testing", current_word);
-var player_id = 10;
+var current_hint = current_word.replace(/[a-zA-Z]/g, "_");
+var next_player_id = 10;
 var drawing_player_id = -1;
 var players = {};
 // The server has to store a copy of the drawing
 // in case someone joins part way through.
 var drawing = [];
+
 var broadcast = (msg) => {
-    console.log("Broadcasting ", msg,
-        Object.keys(players).reduce(
-            (newObj, id) => {
-                newObj[id] = {
-                    name: players[id].name,
-                    score: players[id].score};
-                return newObj}, {}));
+    console.log("Broadcasting", msg, "to players", Object.keys(players));
     for (var id in players) { players[id].conn.sendText(msg) }};
+
 var server = ws.createServer(function (conn) {
     // Protocol: First letter denotes type of message
     //  nTrump
@@ -58,25 +52,25 @@ var server = ws.createServer(function (conn) {
     // Signifies a new player has joined, with id 543 and name Trump
     //  q543
     // Player id 543 has quit
-    //  cA message
+    //  c543,A message
     // Is a chat message / guess
     //  wdraw,chicken
     // Is a word for the drawer to draw
-    //  d257,543
+    //  d257,356
     // Is a mouse move / draw command
     //  tbrush
     // Changes the tool that is used in draw commands.
     console.log("New connection")
-    var my_id = player_id++;
-    players[my_id] = {
-        conn: conn,
-        name: "Anon",
-        score: 0,
-    };
+    var my_id = -1;
     conn.on("text", function (str) {
         console.log("Received "+str)
         switch (str[0]) {
         case 'n':
+            if (my_id >= 0) {
+                conn.sentText('c0,Invalid state, already joined.');
+                conn.close();
+                return;
+            }
             // Just a precaution against , injection attacks. The messages are
             // designed such that this shouldn't be possible regardless, but
             // you can't be too careful...
@@ -85,7 +79,12 @@ var server = ws.createServer(function (conn) {
                 conn.sendText('p' + id + ',' + players[id].name);
             }
             drawing.forEach((msg) => conn.sendText(msg));
-            players[my_id].name = name;
+            my_id = next_player_id++;
+            players[my_id] = {
+                conn: conn,
+                name: name,
+                score: 0,
+            };
             if (drawing_player_id < 0) {
                 drawing_player_id = my_id;
                 conn.sendText('wdraw,' + current_word);
@@ -93,7 +92,8 @@ var server = ws.createServer(function (conn) {
                 conn.sendText('whint,' + current_hint);
             }
             broadcast('p' + my_id + ',' + name);
-            broadcast('c' + name + ' has joined!');
+            broadcast('c0,' + name + ' has joined!');
+            break;
         case 'c':
             var guess = str.slice(1);
             if ((guess.toLowerCase() == current_word.toLowerCase()) && (my_id != drawing_player_id)) {
@@ -111,8 +111,15 @@ var server = ws.createServer(function (conn) {
                 broadcast('c' + my_id + ',' + guess);
             }
             break;
-        case 'd': case 't': drawing.push(str); broadcast(str); break;
-        default: broadcast('cUnhandled message "' + str + '", ignoring.'); break;
+        case 'd': case 't':
+            if (my_id != drawing_player_id) {
+                conn.sendText("c0,Not your turn to draw!");
+                return;
+            }
+            drawing.push(str);
+            broadcast(str);
+            break;
+        default: broadcast('c0,Unhandled message "' + str + '", ignoring.'); break;
         }
     })
     conn.on("close", function (code, reason) {

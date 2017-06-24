@@ -1,5 +1,6 @@
 window.addEventListener('load', function() {
     var sock = new WebSocket('ws://' + location.hostname + ':8001')
+    var ctx = canvas.getContext('2d');
     var lastPoint = null;
     var curTool = 'none';
     var log = function(...msg) {
@@ -32,7 +33,6 @@ window.addEventListener('load', function() {
         case 'd':
             var [x, y] = ev.data.slice(1).split(',', 2).map(s => parseInt(s));
             if (lastPoint) {
-                var ctx = canvas.getContext('2d');
                 ctx.moveTo(lastPoint.x, lastPoint.y);
                 ctx.lineTo(x, y);
                 ctx.stroke();
@@ -54,7 +54,6 @@ window.addEventListener('load', function() {
             var [role, word] = ev.data.slice(1).split(',', 2);
             // Hmm... Should I do this a better way. Probably.
             if (role == 'draw' || role == 'guess') {
-                var ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
             switch (role) {

@@ -12,7 +12,6 @@ body {
     width: 100px;
 }
 #canvas {
-    width: 100%;
     border: 1px solid black;
 }
 #chat {
@@ -30,7 +29,8 @@ window.onresize = window.onload = function () {
     var sw = (id, w) => document.getElementById(id).style.width = w + 'px';
     var sh = (id, h) => document.getElementById(id).style.height = h + 'px';
     if (h > w) can.style.width = w + 'px';
-    else can.style.width = h - 4 - 2 + 'px'; // I have no idea where 4 comes from...
+    // 2 is for border (1px top + 1px bottom). I have no idea where 4 comes from...
+    else can.style.width = h - 4 - 2 + 'px';
 }
 </script>
 </head>
@@ -43,14 +43,18 @@ window.onresize = window.onload = function () {
 <div id="drawing">
     <canvas id="canvas" width="400" height="400"></canvas>
     <div id="palette">
-    <!-- TODO: Add colors and shit here -->
+    <!-- TODO: Add colors and shit here, or maybe in username bar? -->
     </div>
 </div>
+<!-- TODO: The layout of this is terrible, and breaks once the chat messages go
+           below the bottom of the screen. Ideally the messages should scroll,
+           and the chat box should be fixed at the bottom of the screen. Feel
+           free to fix. -->
 <div id="chat">
-<div id="chat-messages"></div>
-<div id="chat-input">
-<textarea placeholder="guess"></textarea>
-</div>
+    <div id="chat-messages"></div>
+    <div id="chat-input">
+    <textarea placeholder="guess"></textarea>
+    </div>
 </div>
 </body>
 </html>
