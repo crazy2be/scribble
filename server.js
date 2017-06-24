@@ -24,7 +24,7 @@ function handler(req, res) {
 console.log("Testing");
 // For now, only one game. Easy to change.
 var current_word = "chicken";
-var player_id = 0;
+var player_id = 10;
 var players = {};
 var broadcast = (msg) => {
     console.log("Broadcasting ", msg,
@@ -62,6 +62,9 @@ var server = ws.createServer(function (conn) {
         console.log("Received "+str)
         switch (str[0]) {
         case 'n':
+            // Just a precaution against , injection attacks. The messages are
+            // designed such that this shouldn't be possible regardless, but
+            // you can't be too careful...
             var name = str.slice(1).replace(/,/g, '');
             for (var id in players) {
                 conn.sendText('p' + id + ',' + players[id].name);
@@ -73,7 +76,7 @@ var server = ws.createServer(function (conn) {
             var guess = str.slice(1);
             if (guess.toLowerCase() == current_word.toLowerCase()) {
                 console.log("Win!");
-                broadcast("cWinner!");
+                broadcast("c0,Winner!");
             } else {
                 broadcast('c' + my_id + ',' + guess);
             }
