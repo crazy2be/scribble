@@ -44,6 +44,7 @@ window.addEventListener('load', function() {
             if (tool == 'none') {
                 lastPoint = null;
             } else if (tool == 'pen') {
+                ctx.beginPath();
             } else {
                 log("Unknown tool '" + tool + "'.");
                 break;
@@ -52,7 +53,6 @@ window.addEventListener('load', function() {
             break;
         case 'w':
             var [role, word] = ev.data.slice(1).split(',', 2);
-            // Hmm... Should I do this a better way. Probably.
             if (role == 'draw' || role == 'guess') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
