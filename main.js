@@ -45,6 +45,8 @@ window.addEventListener('load', function() {
                 lastPoint = null;
             } else if (tool == 'pen') {
                 ctx.beginPath();
+            } else if (tool == 'clear') {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
             } else if (tool == 'color') {
                 ctx.strokeStyle = args;
             } else {
@@ -91,10 +93,12 @@ window.addEventListener('load', function() {
         canvas.onmousemove = null;
         sock.send('tnone');
     };
-    var menu = new radialMenu({spacing: 0});
-    menu.add("🗑"); // Trash can => delete
-    menu.add("🖌"); // Paint brush
-    menu.add("Fill");
+    var menu = new radialMenu({spacing: 0, "deg-start": 75});
+    menu.add("🗑", {"onclick": () => {
+        sock.send('tclear');
+        sock.send('tpen');
+        menu.close();
+    }}); // Trash can => delete
     colors = [
         "#000", "#4C4C4C", "#C1C1C1", "#FFF",
 
