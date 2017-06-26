@@ -1,6 +1,7 @@
 window.addEventListener('load', function() {
     var sock = new WebSocket('ws://' + location.hostname + ':8001')
     var ctx = canvas.getContext('2d');
+    ctx.lineCap = 'round';
     var lastPoint = null;
     var curTool = 'none';
     var log = function(...msg) {
@@ -41,19 +42,25 @@ window.addEventListener('load', function() {
             break;
         case 't':
             var [tool, args] = ev.data.slice(1).split(',', 2);
-            if (tool == 'none') {
+            if (tool == 'pen') {
+                console.log("pen");
                 lastPoint = null;
-            } else if (tool == 'pen') {
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = args;
+                ctx.beginPath();
+            } else if (tool == 'eraser') {
+                console.log("eraser");
+                lastPoint = null;
+                ctx.lineWidth = 20;
+                ctx.strokeStyle = "#FFF";
                 ctx.beginPath();
             } else if (tool == 'clear') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-            } else if (tool == 'color') {
-                ctx.strokeStyle = args;
             } else {
                 log("Unknown tool '" + tool + "'.");
                 break;
             }
-            curTool = tool;
+            curTool = ev.data.slice(1);
             break;
         case 'w':
             var [role, word] = ev.data.slice(1).split(',', 2);
@@ -85,20 +92,22 @@ window.addEventListener('load', function() {
             var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
             sock.send('d' + x + ',' + y);
         }
-        sock.send('tpen');
+        sock.send('t' + curTool);
         ev.preventDefault();
         return false;
     };
     canvas.onmouseup = function () {
         canvas.onmousemove = null;
-        sock.send('tnone');
     };
-    var menu = new radialMenu({spacing: 0, "deg-start": 75});
+    var menu = new radialMenu({spacing: 0, "deg-start": 57});
     menu.add("🗑", {"onclick": () => {
         sock.send('tclear');
-        sock.send('tpen');
         menu.close();
     }}); // Trash can => delete
+    menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
+        sock.send('teraser');
+        menu.close();
+    }});
     colors = [
         "#000", "#4C4C4C", "#C1C1C1", "#FFF",
 
@@ -122,8 +131,8 @@ window.addEventListener('load', function() {
         "#63300D",
     ]
     for (let i = 0; i < colors.length; i++) {
-        menu.add("", {"size": 0.5, "background-style": "fill: " + colors[i], "onclick": () => {
-            sock.send('tcolor,' + colors[i]);
+        menu.add("", {"size": 0.4, "background-style": "fill: " + colors[i], "onclick": () => {
+            sock.send('tpen,' + colors[i]);
             menu.close();
         }});
     }
