@@ -109,26 +109,10 @@ window.addEventListener('load', function() {
         menu.close();
     }});
     colors = [
-        "#000", "#4C4C4C", "#C1C1C1", "#FFF",
-
-        "#EF130B",
-        "#740B07",
-        "#FF7100",
-        "#C23800",
-        "#FFE400",
-        "#E8A200",
-        "#00CC00",
-        "#005510",
-        "#00B2FF",
-        "#00569E",
-        "#231FD3",
-        "#0E0865",
-        "#A300BA",
-        "#550069",
-        "#D37CAA",
-        "#A75574",
-        "#A0522D",
-        "#63300D",
+        "#000000", "#4C4C4C", "#C1C1C1", "#FFFFFF", "#EF130B", "#740B07",
+        "#FF7100", "#C23800", "#FFE400", "#E8A200", "#00CC00",
+        "#005510", "#00B2FF", "#00569E", "#231FD3", "#0E0865", "#A300BA",
+        "#550069", "#D37CAA", "#A75574", "#A0522D", "#63300D",
     ]
     for (let i = 0; i < colors.length; i++) {
         menu.add("", {"size": 0.4, "background-style": "fill: " + colors[i], "onclick": () => {
