@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+<meta http-equiv="content-type" content="application/html; charset=utf-8" />
 <head>
 <style>
 body {
@@ -17,7 +18,15 @@ body {
 #chat {
     width: 300px;
 }
+.radial-menu path {
+    fill: white;
+    stroke: black;
+}
+.radial-menu path:hover {
+    fill: #AAA;
+}
 </style>
+<script src="radial-menu/js/radialMenu.js"></script>
 <script src="main.js"></script>
 <script>
 // This code is a hack, in order to try and get the canvas to not be too tall
@@ -42,9 +51,6 @@ window.onresize = window.onload = function () {
 </div>
 <div id="drawing">
     <canvas id="canvas" width="400" height="400"></canvas>
-    <div id="palette">
-    <!-- TODO: Add colors and shit here, or maybe in username bar? -->
-    </div>
 </div>
 <!-- TODO: The layout of this is terrible, and breaks once the chat messages go
            below the bottom of the screen. Ideally the messages should scroll,
