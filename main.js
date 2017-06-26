@@ -100,13 +100,12 @@ window.addEventListener('load', function() {
         canvas.onmousemove = null;
     };
     var menu = new radialMenu({spacing: 0, "deg-start": 57});
+    document.onclick = () => { menu.close(); };
     menu.add("🗑", {"onclick": () => {
         sock.send('tclear');
-        menu.close();
     }}); // Trash can => delete
     menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
         sock.send('teraser');
-        menu.close();
     }});
     colors = [
         "#000000", "#4C4C4C", "#C1C1C1", "#FFFFFF", "#EF130B", "#740B07",
@@ -115,10 +114,8 @@ window.addEventListener('load', function() {
         "#550069", "#D37CAA", "#A75574", "#A0522D", "#63300D",
     ]
     for (let i = 0; i < colors.length; i++) {
-        menu.add("", {"size": 0.4, "background-style": "fill: " + colors[i], "onclick": () => {
-            sock.send('tpen,' + colors[i]);
-            menu.close();
-        }});
+        menu.add("", {"size": 0.4, "background-style": "fill: " + colors[i],
+            "onclick": () => {sock.send('tpen,' + colors[i]);}});
     }
     canvas.oncontextmenu = function(ev) {
         menu.openAt(ev.pageX, ev.pageY);
