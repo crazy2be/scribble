@@ -93,10 +93,27 @@ window.addEventListener('load', function() {
     menu.add("🖌"); // Paint brush
     menu.add("Fill");
     colors = [
-        "#FFF","#C1C1C1","#EF130B","#FF7100","#FFE400","#00CC00",
-        "#00B2FF","#231FD3","#A300BA","#D37CAA","#A0522D",
-        "#000","#4C4C4C","#740B07","#C23800","#E8A200","#005510",
-        "#00569E","#0E0865","#550069","#A75574","#63300D"]
+        "#000", "#4C4C4C", "#C1C1C1", "#FFF",
+
+        "#EF130B",
+        "#740B07",
+        "#FF7100",
+        "#C23800",
+        "#FFE400",
+        "#E8A200",
+        "#00CC00",
+        "#005510",
+        "#00B2FF",
+        "#00569E",
+        "#231FD3",
+        "#0E0865",
+        "#A300BA",
+        "#550069",
+        "#D37CAA",
+        "#A75574",
+        "#A0522D",
+        "#63300D",
+    ]
     for (var i = 0; i < colors.length; i++) {
         menu.add("", {"size": 0.5, "background-style": "fill: " + colors[i]});
     }
