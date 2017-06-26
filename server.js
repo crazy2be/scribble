@@ -35,14 +35,21 @@ function throttle(fn, threshhold) {
 }
 
 function randomWord() {
+    return "många";
     return 'apple'; // for testing
     // TODO: could be a larger word list. Other languages.
-    return ["apple", "pepper", "chicken", "potato", "neuken", "keuken"].random();
+    return ["apple", "pepper", "chicken", "potato", "neuken", "keuken", "många"].random();
 }
+
+function fuzzyMatch(a, b) {
+    return stripAccents(a) === stripAccents(b);
+}
+
+var stripAccents = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
 // For now, only one game. Easy to change.
 var current_word = randomWord();
-var current_hint = current_word.replace(/[a-zA-Z]/g, "_");
+var current_hint = stripAccents(current_word).replace(/[a-zA-Z]/g, "_");
 var next_player_id = 10;
 var drawing_player_id = -1;
 var players = {};
@@ -107,12 +114,12 @@ var server = ws.createServer(function (conn) {
             break;
         case 'c':
             var guess = str.slice(1);
-            if ((guess.toLowerCase() == current_word.toLowerCase()) && (my_id != drawing_player_id)) {
+            if ((my_id != drawing_player_id) && fuzzyMatch(guess, current_word)) {
                 broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
                 drawing = [];
                 drawing_player_id = Object.keys(players).random();
                 current_word = randomWord();
-                current_hint = current_word.replace(/[a-zA-Z]/g, "_");
+                current_hint = stripAccents(current_word).replace(/[a-zA-Z]/g, "_");
                 players[drawing_player_id].conn.sendText('wdraw,' + current_word);
                 for (var id in players) {
                     if (id == drawing_player_id) continue;
