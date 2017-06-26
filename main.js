@@ -11,7 +11,7 @@ window.addEventListener('load', function() {
     }
     log('test');
     sock.onmessage = function (ev) {
-        console.log("Got msg", ev.data);
+        //console.log("Got msg", ev.data);
         switch (ev.data[0]) {
         case 'c':
             var [id, msg] = ev.data.slice(1).split(',', 2);
@@ -40,11 +40,13 @@ window.addEventListener('load', function() {
             lastPoint = {x: x, y: y};
             break;
         case 't':
-            var tool = ev.data.slice(1);
+            var [tool, args] = ev.data.slice(1).split(',', 2);
             if (tool == 'none') {
                 lastPoint = null;
             } else if (tool == 'pen') {
                 ctx.beginPath();
+            } else if (tool == 'color') {
+                ctx.strokeStyle = args;
             } else {
                 log("Unknown tool '" + tool + "'.");
                 break;
@@ -114,8 +116,11 @@ window.addEventListener('load', function() {
         "#A0522D",
         "#63300D",
     ]
-    for (var i = 0; i < colors.length; i++) {
-        menu.add("", {"size": 0.5, "background-style": "fill: " + colors[i]});
+    for (let i = 0; i < colors.length; i++) {
+        menu.add("", {"size": 0.5, "background-style": "fill: " + colors[i], "onclick": () => {
+            sock.send('tcolor,' + colors[i]);
+            menu.close();
+        }});
     }
     canvas.oncontextmenu = function(ev) {
         menu.open();
