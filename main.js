@@ -77,6 +77,7 @@ window.addEventListener('load', function() {
         sock.send('n' + ((Math.random() > 0.5) ? "boii" : "noboii"));
     };
     canvas.onmousedown = function (ev) {
+        if (ev.button !== 0) return;
         canvas.onmousemove = function (ev) {
             var x = ~~((ev.clientX - canvas.offsetLeft) / (canvas.offsetWidth / canvas.width));
             var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
@@ -123,7 +124,7 @@ window.addEventListener('load', function() {
         }});
     }
     canvas.oncontextmenu = function(ev) {
-        menu.open();
+        menu.openAt(ev.pageX, ev.pageY);
         ev.preventDefault();
     };
     var guess = document.querySelector('#chat-input textarea');
