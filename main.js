@@ -20,9 +20,6 @@ window.addEventListener('load', function() {
         switch (ev.data[0]) {
         case 'l':
             myID = parseInt(ev.data.slice(1));
-            start.onclick = () => {
-                sock.send('s');
-            }
             break;
         case 'g':
             var [prop, val] = split(ev.data.slice(1), ',', 2);
@@ -119,6 +116,10 @@ window.addEventListener('load', function() {
     };
     canvas.onmouseup = function () {
         canvas.onmousemove = null;
+    };
+    start.onclick = () => {
+        log("clicked");
+        sock.send('s');
     };
     var menu = new radialMenu({spacing: 0, "deg-start": 57});
     document.onclick = () => { menu.close(); };
