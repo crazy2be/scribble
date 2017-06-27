@@ -27,6 +27,7 @@ window.addEventListener('load', function() {
         switch (ev.data[0]) {
         case 'l':
             myID = parseInt(ev.data.slice(1));
+            document.getElementById("my-id").innerText = myID;
             break;
         case 'g':
             var [prop, val] = split(ev.data.slice(1), ',', 2);
