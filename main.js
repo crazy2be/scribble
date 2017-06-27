@@ -13,6 +13,13 @@ window.addEventListener('load', function() {
         div.innerText = msg.join(' ');
         document.getElementById('chat-messages').appendChild(div);
     }
+    var getOrCreate = (id, ctor) => {
+        var el = document.getElementById(id);
+        if (el) return el;
+        el = ctor();
+        el.id = id;
+        return el;
+    };
 
     log('test');
     sock.onmessage = function (ev) {
@@ -37,12 +44,18 @@ window.addEventListener('load', function() {
             log(id, msg);
             break;
         case 'p':
-            var [id, name] = split(ev.data.slice(1), ',', 2);
-            var div = document.createElement("div");
-            div.className = "player";
-            div.id = "player" + id;
-            div.innerText = id + ' ' + name;
-            players.appendChild(div);
+            var [id, prop, val] = split(ev.data.slice(1), ',', 3);
+            var div = getOrCreate("player" + id, () => {
+                var div = document.createElement("div");
+                div.className = "player";
+                players.appendChild(div);
+                return div;
+            });
+            if (prop === 'name') {
+                div.innerText = id + ' ' + val;
+            } else {
+                log("Unknown player property", id, prop, val);
+            }
             break;
         case 'q':
             var id = ev.data.slice(1);
