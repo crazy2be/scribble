@@ -86,6 +86,7 @@ window.addEventListener('load', function() {
     };
     canvas.onmousedown = function (ev) {
         if (ev.button !== 0) return;
+        if (curTool == 'clear') return;
         canvas.onmousemove = function (ev) {
             var x = ~~((ev.clientX - canvas.offsetLeft) / (canvas.offsetWidth / canvas.width));
             var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
