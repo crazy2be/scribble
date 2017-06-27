@@ -97,7 +97,7 @@ var send = (id, msg) => {
 var random_id = (state) => {
     var pred = id => true
     if (state !== undefined) pred = id => players[id].state === state
-    return Object.keys(players).filter(pred).random() || -1;
+    return parseInt(Object.keys(players).filter(pred).random()) || -1;
 }
 
 var drawing_and_word_reset = () => {
