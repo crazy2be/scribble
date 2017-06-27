@@ -39,6 +39,9 @@ window.addEventListener('load', function() {
             }
             log("Unknown game property", prop, val);
             break;
+        case 's':
+            start.innerText = 'Join';
+            break;
         case 'c':
             var [id, msg] = split(ev.data.slice(1), ',', 2);
             log(id, msg);
