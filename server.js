@@ -173,7 +173,6 @@ var server = ws.createServer(function (conn) {
         case 'p':
             if (players[my_id].state != STATE_LOBBY) {
                 send(my_id, 'c0,Cannot change player properties in game.');
-                conn.close();
                 return;
             }
             var tmp = misc.split(str.slice(1), ',', 2), prop = tmp[0], val = tmp[1];
@@ -181,13 +180,11 @@ var server = ws.createServer(function (conn) {
             break;
         case 's':
             if (players[my_id].state != STATE_LOBBY) {
-                send(my_id, "c0,Cannot join if not in lobby.");
-                conn.close();
+                send(my_id, "c0,Cannot join if not in lobby.")
                 return;
             }
             if ((game_state !== STATE_GAME) && (my_id !== host_player_id)) {
                 send(my_id, "c0,You are not the host, cannot start game.");
-                conn.close();
                 return;
             }
             if (my_id === host_player_id) {
