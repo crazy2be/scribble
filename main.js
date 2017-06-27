@@ -51,11 +51,16 @@ window.addEventListener('load', function() {
             var div = getOrCreate("player" + id, () => {
                 var div = document.createElement("div");
                 div.className = "player";
+                div.style.color = '#999999';
                 players.appendChild(div);
                 return div;
             });
             if (prop === 'name') {
                 div.innerText = id + ' ' + val;
+            } else if (prop === 'state') {
+                if (val === 'lobby') div.style.color = '#999999';
+                else if (val === 'game') div.style.color = '#000000';
+                else log("Unknown player state", id, val);
             } else {
                 log("Unknown player property", id, prop, val);
             }
