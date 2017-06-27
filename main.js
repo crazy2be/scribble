@@ -101,6 +101,10 @@ window.addEventListener('load', function() {
         }
     }
     sock.onopen = function () { sock.send('l'); };
+    sock.onclose = function () {
+        log("Disconnected.");
+        document.body.style.backgroundColor = 'red';
+    };
     canvas.onmousedown = function (ev) {
         if (ev.button !== 0) return;
         if (curTool == 'clear') return;
