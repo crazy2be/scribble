@@ -4,29 +4,37 @@ window.addEventListener('load', function() {
     ctx.lineCap = 'round';
     var lastPoint = null;
     var curTool = 'pen';
+    var myID = -1;
+    var hostID = -1;
+    var drawerID = -1;
     var log = function(...msg) {
         var div = document.createElement('div');
         div.className = 'chat-message';
         div.innerText = msg.join(' ');
         document.getElementById('chat-messages').appendChild(div);
     }
-    // Like regular split, but splits beyond the n don't discard, but rather
-    // just stop splitting. Like you probably want.
-    function split(s, sep, n) {
-        var res = [];
-        for (var i = 0; (i < s.length) && (res.length + 1 < n); i++) {
-            if (s[i] !== sep) continue;
-            res.push(s.slice(0, i))
-            s = s.slice(i + 1); // Skip the seperator
-            i = 0;
-        }
-        res.push(s);
-        return res;
-    }
+
     log('test');
     sock.onmessage = function (ev) {
         //console.log("Got msg", ev.data);
         switch (ev.data[0]) {
+        case 'l':
+            myID = parseInt(ev.data.slice(1));
+            start.onclick = () => {
+                sock.send('s');
+            }
+            break;
+        case 'g':
+            var [prop, val] = split(ev.data.slice(1), ',', 2);
+            if (prop === 'host') {
+                hostID = parseInt(val);
+                break;
+            } else if (prop === 'drawer') {
+                drawerID = parseInt(val);
+                break;
+            }
+            log("Unknown game property", prop, val);
+            break;
         case 'c':
             var [id, msg] = split(ev.data.slice(1), ',', 2);
             log(id, msg);
@@ -92,11 +100,7 @@ window.addEventListener('load', function() {
             break;
         }
     }
-    sock.onopen = function () {
-        // Feature credit goes to mitboii for suggestion this mathematically
-        // optimal name selection algorithm.
-        sock.send('n' + ((Math.random() > 0.5) ? "boii" : "noboii"));
-    };
+    sock.onopen = function () { sock.send('l'); };
     canvas.onmousedown = function (ev) {
         if (ev.button !== 0) return;
         if (curTool == 'clear') return;
