@@ -32,6 +32,8 @@ window.addEventListener('load', function() {
             var [prop, val] = split(ev.data.slice(1), ',', 2);
             if (prop === 'host') {
                 hostID = parseInt(val);
+                if (hostID === myID) start.style.display = '';
+                document.getElementById('host-id').innerText = hostID;
                 break;
             } else if (prop === 'drawer') {
                 drawerID = parseInt(val);
@@ -41,6 +43,7 @@ window.addEventListener('load', function() {
             break;
         case 's':
             start.innerText = 'Join';
+            start.style.display = '';
             break;
         case 'c':
             var [id, msg] = split(ev.data.slice(1), ',', 2);
@@ -141,6 +144,8 @@ window.addEventListener('load', function() {
     start.onclick = () => {
         log("clicked");
         sock.send('s');
+        start.disabled = true;
+        start.onclick = null;
     };
     var menu = new radialMenu({spacing: 0, "deg-start": 57});
     document.onclick = () => { menu.close(); };
