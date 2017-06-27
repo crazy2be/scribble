@@ -80,7 +80,6 @@ window.addEventListener('load', function() {
         }
     }
     sock.onopen = function () {
-        sock.send('test');
         // Feature credit goes to mitboii for suggestion this mathematically
         // optimal name selection algorithm.
         sock.send('n' + ((Math.random() > 0.5) ? "boii" : "noboii"));

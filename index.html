@@ -41,8 +41,6 @@ body {
 window.onresize = window.onload = function () {
     var can = document.getElementById('canvas');
     var w = can.innerWidth, h = window.innerHeight;
-    var sw = (id, w) => document.getElementById(id).style.width = w + 'px';
-    var sh = (id, h) => document.getElementById(id).style.height = h + 'px';
     if (h > w) can.style.width = w + 'px';
     // 2 is for border (1px top + 1px bottom). I have no idea where 4 comes from...
     else can.style.width = h - 4 - 2 + 'px';
@@ -51,9 +49,7 @@ window.onresize = window.onload = function () {
 </head>
 <body>
 <div id="players">
-    <div class="player">Norden</div>
-    <div class="player">Potato Chip</div>
-    <div class="player">Checkmark</div>
+    <b>Players:</b>
 </div>
 <div id="drawing">
     <canvas id="canvas" width="400" height="400"></canvas>
@@ -63,6 +59,7 @@ window.onresize = window.onload = function () {
            and the chat box should be fixed at the bottom of the screen. Feel
            free to fix. -->
 <div id="chat">
+    <b>Chat:</b>
     <div id="chat-messages"></div>
     <div id="chat-input">
     <textarea placeholder="guess"></textarea>
