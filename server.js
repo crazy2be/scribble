@@ -54,7 +54,7 @@ var current_hint = stripAccents(current_word).replace(/[a-zA-Z]/g, "_");
 var next_player_id = 10;
 var drawing_player_id = -1;
 var host_player_id = -1;
-var STATE_LOBBY = 0, STATE_GAME = 1;
+var STATE_LOBBY = 'lobby', STATE_GAME = 'game';
 var game_state = STATE_LOBBY;
 var players = {};
 // The server has to store a copy of the drawing
@@ -89,7 +89,7 @@ var broadcast = (msg) => {
     for (var id in players) { players[id].conn.sendText(msg) }};
 
 var send = (id, msg) => {
-    if (!coalesce(id, msg)) console.log("Sending", msg, "to player", id, players[id].name);
+    if (!coalesce(id, msg)) console.log("Sending", msg, "to player", id);
     players[id].conn.sendText(msg);}
 
 // TODO: What we really want is next_id, like, people should draw and
@@ -155,11 +155,15 @@ var server = ws.createServer(function (conn) {
                 state: STATE_LOBBY,
                 score: 0,
             };
-            if (host_player_id < 0) host_player_id = my_id;
             send(my_id, 'l' + my_id);
             for (var id in players) {
+                if (parseInt(id) === my_id) continue;
                 send(my_id, 'p' + id + ',name,' + players[id].name);
+                send(my_id, 'p' + id + ',state,' + players[id].state);
             }
+            broadcast('p' + my_id + ',name,' + players[my_id].name);
+            broadcast('p' + my_id + ',state,' + players[my_id].state);
+            if (host_player_id < 0) host_player_id = my_id;
             send(my_id, 'ghost,' + host_player_id);
             if (game_state == STATE_GAME) {
                 send(my_id, 's');
@@ -198,8 +202,10 @@ var server = ws.createServer(function (conn) {
                 send(my_id, 'whint,' + current_hint);
             }
             send(my_id, 'gdrawer,' + drawing_player_id);
-            broadcast('c0,' + players[my_id].name + ' has joined!');
+
             players[my_id].state = STATE_GAME;
+            broadcast('p' + my_id + ',state,' + players[my_id].state);
+            broadcast('c0,' + players[my_id].name + ' has joined!');
             break;
         case 'c':
             var guess = str.slice(1);
