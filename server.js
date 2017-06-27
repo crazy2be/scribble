@@ -61,12 +61,35 @@ var players = {};
 // in case someone joins part way through.
 var drawing = [];
 
+var coalesce = () => {
+    var prevID = 0;
+    var numRecv = 0;
+    var numSent = 0;
+    var numBroad = 0;
+    var different = (a, b) => a !== b && a !== -b && a !== 0 && b !== 0;
+    return (id, msg) => {
+        if ((numRecv + numSent + numBroad) > 0 && (msg[0] !== 'd' || different(id, prevID))) {
+            if (numRecv > 0) console.log("Received", numRecv, "draw messages from", prevID)
+            if (numSent > 0) console.log("Sent", numSent, "draw messages to player", prevID);
+            if (numBroad > 0) console.log("Broadcast", numBroad, "draw messages to players", Object.keys(players));
+            numRecv = numSent = numBroad = 0;
+            return false;
+        }
+        if (msg[0] !== 'd') return false;
+        if (id !== 0) prevID = Math.abs(id);
+        if (id < 0) numRecv++;
+        else if (id > 0) numSent++;
+        else if (id === 0) numBroad++;
+        return true;
+    };
+}();
+
 var broadcast = (msg) => {
-    console.log("Broadcasting", msg, "to players", Object.keys(players));
+    if (!coalesce(0, msg)) console.log("Broadcasting", msg, "to players", Object.keys(players));
     for (var id in players) { players[id].conn.sendText(msg) }};
 
 var send = (id, msg) => {
-    console.log("Sending", msg, "to player", id, players[id].name);
+    if (!coalesce(id, msg)) console.log("Sending", msg, "to player", id, players[id].name);
     players[id].conn.sendText(msg);}
 
 // TODO: What we really want is next_id, like, people should draw and
@@ -117,7 +140,7 @@ var server = ws.createServer(function (conn) {
     var my_id = -1;
     var print_not_your_turn = throttle(() => send(my_id, "c0,Not your turn to draw, or game not started!"));
     conn.on("text", function (str) {
-        console.log("Received "+str)
+        if (!coalesce(-my_id, str)) console.log("Received "+str)
         switch (str[0]) {
         case 'l':
             if (my_id >= 0) {
