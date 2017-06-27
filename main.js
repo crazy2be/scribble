@@ -10,16 +10,29 @@ window.addEventListener('load', function() {
         div.innerText = msg.join(' ');
         document.getElementById('chat-messages').appendChild(div);
     }
+    // Like regular split, but splits beyond the n don't discard, but rather
+    // just stop splitting. Like you probably want.
+    function split(s, sep, n) {
+        var res = [];
+        for (var i = 0; (i < s.length) && (res.length + 1 < n); i++) {
+            if (s[i] !== sep) continue;
+            res.push(s.slice(0, i))
+            s = s.slice(i + 1); // Skip the seperator
+            i = 0;
+        }
+        res.push(s);
+        return res;
+    }
     log('test');
     sock.onmessage = function (ev) {
         //console.log("Got msg", ev.data);
         switch (ev.data[0]) {
         case 'c':
-            var [id, msg] = ev.data.slice(1).split(',', 2);
+            var [id, msg] = split(ev.data.slice(1), ',', 2);
             log(id, msg);
             break;
         case 'p':
-            var [id, name] = ev.data.slice(1).split(',', 2);
+            var [id, name] = split(ev.data.slice(1), ',', 2);
             var div = document.createElement("div");
             div.className = "player";
             div.id = "player" + id;
@@ -32,7 +45,7 @@ window.addEventListener('load', function() {
             div.parentNode.removeChild(div);
             break;
         case 'd':
-            var [x, y] = ev.data.slice(1).split(',', 2).map(s => parseInt(s));
+            var [x, y] = split(ev.data.slice(1), ',', 2).map(s => parseInt(s));
             if (lastPoint) {
                 ctx.moveTo(lastPoint.x, lastPoint.y);
                 ctx.lineTo(x, y);
@@ -41,7 +54,7 @@ window.addEventListener('load', function() {
             lastPoint = {x: x, y: y};
             break;
         case 't':
-            var [tool, args] = ev.data.slice(1).split(',', 2);
+            var [tool, args] = split(ev.data.slice(1), ',', 2);
             if (tool == 'pen') {
                 console.log("pen");
                 lastPoint = null;
@@ -63,7 +76,7 @@ window.addEventListener('load', function() {
             curTool = ev.data.slice(1);
             break;
         case 'w':
-            var [role, word] = ev.data.slice(1).split(',', 2);
+            var [role, word] = split(ev.data.slice(1), ',', 2);
             if (role == 'draw' || role == 'guess') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
