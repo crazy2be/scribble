@@ -38,6 +38,7 @@ window.addEventListener('load', function() {
                 break;
             } else if (prop === 'drawer') {
                 drawerID = parseInt(val);
+                document.getElementById('drawer-id').innerText = drawerID;
                 break;
             }
             log("Unknown game property", prop, val);
