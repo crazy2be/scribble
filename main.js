@@ -3,7 +3,7 @@ window.addEventListener('load', function() {
     var ctx = canvas.getContext('2d');
     ctx.lineCap = 'round';
     var lastPoint = null;
-    var curTool = 'none';
+    var curTool = 'pen';
     var log = function(...msg) {
         var div = document.createElement('div');
         div.className = 'chat-message';
@@ -46,7 +46,7 @@ window.addEventListener('load', function() {
                 console.log("pen");
                 lastPoint = null;
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = args;
+                ctx.strokeStyle = args || "#000";
                 ctx.beginPath();
             } else if (tool == 'eraser') {
                 console.log("eraser");
