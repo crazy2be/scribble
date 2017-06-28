@@ -242,8 +242,10 @@ var server = ws.createServer(function (conn) {
     })
     conn.on("close", function (code, reason) {
         console.log("Connection closed")
+        var name = players[my_id].name;
         delete players[my_id];
         broadcast('q' + my_id);
+        broadcast('c0,Player ' + name + ' with id ' + my_id + ' has quit!');
         if (my_id === host_player_id) {
             host_player_id = random_id();
             broadcast('ghost,' + host_player_id);
