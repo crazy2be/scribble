@@ -2,7 +2,6 @@ window.addEventListener('load', function() {
     var sock = new WebSocket('ws://' + location.hostname + ':8001')
     var ctx = canvas.getContext('2d');
     ctx.lineCap = 'round';
-    var curTool = 'pen';
     var myID = -1;
     var hostID = -1;
     var drawerID = -1;
@@ -50,6 +49,9 @@ window.addEventListener('load', function() {
                     ctx.lineWidth = 20;
                     ctx.strokeStyle = "#FFF";
                     ctx.beginPath();
+                } else if (tool == 'down') {
+                    this.lastPoint = null;
+                    ctx.beginPath();
                 } else if (tool == 'clear') {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                 } else {
@@ -78,7 +80,6 @@ window.addEventListener('load', function() {
             this.commands.push(command);
             this.drawer.run(command);
             sock.send(command);
-            if (command[0] === 't') curTool = command.slice(1);
         }
         accept(command) {
             var t = +new Date();
@@ -194,14 +195,13 @@ window.addEventListener('load', function() {
     };
     canvas.onmousedown = function (ev) {
         if (ev.button !== 0) return;
-        if (curTool === 'clear') return;
         if (myID !== drawerID) return;
         canvas.onmousemove = function (ev) {
             var x = ~~((ev.clientX - canvas.offsetLeft) / (canvas.offsetWidth / canvas.width));
             var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
             drawCommandQueue.add('d' + x + ',' + y);
         }
-        drawCommandQueue.add('t' + curTool);
+        drawCommandQueue.add('tdown');
         ev.preventDefault();
         return false;
     };
@@ -227,21 +227,26 @@ window.addEventListener('load', function() {
     document.onclick = () => { menu.close(); };
     menu.add("🗑", {"onclick": () => {
         drawCommandQueue.add('tclear');
+        drawCommandQueue.add('tpen,#OOOOOO');
+        colorItems[0].open();
     }}); // Trash can => delete
     menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
         drawCommandQueue.add('teraser');
     }});
-    colors = [
+    var colors = [
         "#000000", "#4C4C4C", "#C1C1C1", "#FFFFFF", "#EF130B", "#740B07",
         "#FF7100", "#C23800", "#FFE400", "#E8A200", "#00CC00",
         "#005510", "#00B2FF", "#00569E", "#231FD3", "#0E0865", "#A300BA",
         "#550069", "#D37CAA", "#A75574", "#A0522D", "#63300D",
     ]
+    var colorItems = [];
     for (let i = 0; i < colors.length; i++) {
-        menu.add("", {"size": 0.4, "background-style": "fill: " + colors[i],
+        colorItems.push(menu.add("", {
+            "size": 0.4,
+            "background-style": "fill: " + colors[i],
             "onclick": () => {
                 drawCommandQueue.add('tpen,' + colors[i]);
-            }});
+            }}));
     }
     canvas.oncontextmenu = function(ev) {
         ev.preventDefault();
