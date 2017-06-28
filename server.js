@@ -107,6 +107,15 @@ var drawing_and_word_reset = () => {
     current_hint = stripAccents(current_word).replace(/[a-zA-Z]/g, "_");
 };
 
+var tell_clients_about_new_drawing = () => {
+    send(drawing_player_id, 'wdraw,' + current_word);
+    for (var id in players) {
+        if (id == drawing_player_id) continue;
+        send(id, 'wguess,' + current_hint);
+    }
+    broadcast('gdrawer,' + drawing_player_id);
+};
+
 var server = ws.createServer(function (conn) {
     // Flow:
     //  Load page -> lobby. Join with default name, assigned ID.
@@ -215,12 +224,7 @@ var server = ws.createServer(function (conn) {
             }
             broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
             drawing_and_word_reset();
-            send(drawing_player_id, 'wdraw,' + current_word);
-            for (var id in players) {
-                if (id == drawing_player_id) continue;
-                send(id, 'wguess,' + current_hint);
-            }
-            broadcast('gdrawer,' + drawing_player_id);
+            tell_clients_about_new_drawing();
             break;
         case 'd': case 't':
             if (my_id != drawing_player_id || game_state !== STATE_GAME) {
@@ -242,10 +246,10 @@ var server = ws.createServer(function (conn) {
             broadcast('ghost,' + host_player_id);
         }
         if (my_id === drawing_player_id) {
-            drawing_player_id = random_id(STATE_GAME);
-            // TODO: THis probably is not enough, we instead want to actually
-            // start a new drawing, with a drawer, new hints, etc.
-            broadcast('gdrawer,' + drawing_player_id);
+            broadcast('c0,The drawer left!');
+            drawing_and_word_reset();
+            // If a tree falls in a forest... It throws an exception
+            if (drawing_player_id >= 0) tell_clients_about_new_drawing();
         }
     })
     conn.on("error", function (err) {
