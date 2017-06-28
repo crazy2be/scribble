@@ -193,7 +193,7 @@ window.addEventListener('load', function() {
     sock.onopen = function () { sock.send('l'); };
     sock.onclose = function () {
         log("Disconnected.");
-        document.body.style.backgroundColor = 'red';
+        document.body.style.background = 'red';
     };
     canvas.onmousedown = function (ev) {
         if (ev.button !== 0) return;
