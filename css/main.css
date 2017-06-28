@@ -17,9 +17,8 @@ header {
 }
 header h1 {
     font-family: 'Pacifico', cursive;
-    font-size: 60px;
-    padding-left: 10px;
-    margin: 20px 0px;
+	font-size: 50px;
+    margin: 10px 0px;
     color: #ffffff;
     text-shadow: 1px 1px 3px #04ff00;
     text-align: center;
@@ -139,6 +138,7 @@ div#change-name {
     border-radius: 5px;
     box-sizing: border-box;
     overflow-y: auto;
+	word-wrap: break-word;
 }
 .chat-message {
     padding: 7px 15px;
