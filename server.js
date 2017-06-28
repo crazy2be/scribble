@@ -35,31 +35,42 @@ function throttle(fn, threshhold) {
   };
 }
 
+var words = (() => {
+    var lines = fs.readFileSync("words.csv").toString().split("\n");
+    var header = lines[0].split(',');
+    return lines.slice(1).map(l => l.split(',')).map(vals => {
+        var obj = {};
+        for (var i = 0; i < vals.length; i++) {
+            obj[header[i]] = vals[i];
+        }
+        return obj;
+    });
+})()
 function randomWord() {
+    return words.random();
     return "många";
     return 'apple'; // for testing
     // TODO: could be a larger word list. Other languages.
     return ["apple", "pepper", "chicken", "potato", "neuken", "keuken", "många"].random();
 }
 
-function fuzzyMatch(a, b) {
-    return stripAccents(a) === stripAccents(b);
+function fuzzyMatch(guess, word) {
+    for (var lan in word) {
+        if (stripAccents(guess) === stripAccents(word[lan])) return true;
+    }
+    return false;
 }
 
 var stripAccents = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
 // For now, only one game. Easy to change.
-var current_word = randomWord();
-var current_hint = stripAccents(current_word).replace(/[a-zA-Z]/g, "_");
-var next_player_id = 10;
-var drawing_player_id = -1;
+
 var host_player_id = -1;
+
 var STATE_LOBBY = 'lobby', STATE_GAME = 'game';
 var game_state = STATE_LOBBY;
+var next_player_id = 10;
 var players = {};
-// The server has to store a copy of the drawing
-// in case someone joins part way through.
-var drawing = [];
 
 var coalesce = (() => {
     var prevID = 0;
@@ -112,15 +123,17 @@ var next_id = (prev_id, state) => {
     }
 }
 
+var drawing, drawing_player_id, current_word, current_hint;
 var drawing_and_word_reset = () => {
     drawing = [];
     drawing_player_id = next_id(drawing_player_id, STATE_GAME);
     current_word = randomWord();
-    current_hint = stripAccents(current_word).replace(/[a-zA-Z]/g, "_");
+    current_hint = stripAccents(current_word.english).replace(/[a-zA-Z]/g, "_");
 };
+drawing_and_word_reset();
 
 var tell_clients_about_new_drawing = () => {
-    send(drawing_player_id, 'wdraw,' + current_word);
+    send(drawing_player_id, 'wdraw,' + current_word.english);
     for (var id in players) {
         if (id == drawing_player_id) continue;
         send(id, 'wguess,' + current_hint);
@@ -219,7 +232,7 @@ var server = ws.createServer(function (conn) {
             }
             if (drawing_player_id < 0) {
                 drawing_player_id = my_id;
-                send(my_id, 'wdraw,' + current_word);
+                send(my_id, 'wdraw,' + current_word.english);
             } else {
                 send(my_id, 'whint,' + current_hint);
             }
