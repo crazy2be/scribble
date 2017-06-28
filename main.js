@@ -2,7 +2,6 @@ window.addEventListener('load', function() {
     var sock = new WebSocket('ws://' + location.hostname + ':8001')
     var ctx = canvas.getContext('2d');
     ctx.lineCap = 'round';
-    var lastPoint = null;
     var curTool = 'pen';
     var myID = -1;
     var hostID = -1;
@@ -22,7 +21,95 @@ window.addEventListener('load', function() {
         el.id = id;
         return el;
     };
-
+    class Drawer {
+        constructor(ctx) {
+            this.ctx = ctx;
+            this.lastPoint = null;
+        }
+        run(command) {
+            var ctx = this.ctx;
+            if (command[0] === 'd') {
+                var [x, y] = split(command.slice(1), ',', 2).map(s => parseInt(s));
+                if (this.lastPoint) {
+                    ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                }
+                this.lastPoint = {x: x, y: y};
+            } else if (command[0] === 't') {
+                var [tool, args] = split(command.slice(1), ',', 2);
+                if (tool == 'pen') {
+                    console.log("pen");
+                    this.lastPoint = null;
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = args || "#000";
+                    ctx.beginPath();
+                } else if (tool == 'eraser') {
+                    console.log("eraser");
+                    this.lastPoint = null;
+                    ctx.lineWidth = 20;
+                    ctx.strokeStyle = "#FFF";
+                    ctx.beginPath();
+                } else if (tool == 'clear') {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                } else {
+                    log("Unknown tool '" + tool + "'.");
+                    return;
+                }
+            }
+        }
+        clear() {
+            this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+    class DrawCommandQueue {
+        constructor(drawer) {
+            this.acceptedCommands = [];
+            this.commands = [];
+            this.times = [];
+            this.drawer = drawer;
+        }
+        add(command) {
+            if (drawerID !== myID) {
+                // TODO: Log something?
+                return;
+            }
+            var t = +new Date();
+            this.times.push(t);
+            this.commands.push(command);
+            this.drawer.run(command);
+            sock.send(command);
+        }
+        accept(command) {
+            var t = +new Date();
+            this.acceptedCommands.push(command);
+            if (drawerID !== myID) {
+                this.drawer.run(command);
+                return;
+            }
+            if (command !== this.commands[0]) {
+                log("Got out of order command!");
+                log("Expected", this.commands[0], this.times[0]);
+                log("Got", command, t);
+                // We messed up somewhere, drop everything we were predicting
+                // and just draw what has been confirmed.
+                this.commands = [];
+                this.times = [];
+                this.drawer.clear();
+                this.acceptedCommands.forEach(cmd => drawer.run(cmd));
+                return;
+            }
+            this.commands.shift();
+            this.times.shift();
+        }
+        clear() {
+            this.acceptedCommands = [];
+            this.commands = [];
+            this.times = [];
+            this.drawer.clear();
+        }
+    };
+    var drawCommandQueue = new DrawCommandQueue(new Drawer(ctx));
     log('test');
     sock.onmessage = function (ev) {
         //console.log("Got msg", ev.data);
@@ -42,6 +129,7 @@ window.addEventListener('load', function() {
                 drawerID = parseInt(val);
                 document.getElementById('drawer-id').innerText = drawerID;
                 drawing.style.cursor = drawerID === myID ? 'crosshair' : 'not-allowed';
+                drawCommandQueue.clear();
                 break;
             }
             log("Unknown game property", prop, val);
@@ -83,41 +171,14 @@ window.addEventListener('load', function() {
             div.parentNode.removeChild(div);
             break;
         case 'd':
-            var [x, y] = split(ev.data.slice(1), ',', 2).map(s => parseInt(s));
-            if (lastPoint) {
-                ctx.moveTo(lastPoint.x, lastPoint.y);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-            }
-            lastPoint = {x: x, y: y};
+            drawCommandQueue.accept(ev.data);
             break;
         case 't':
-            var [tool, args] = split(ev.data.slice(1), ',', 2);
-            if (tool == 'pen') {
-                console.log("pen");
-                lastPoint = null;
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = args || "#000";
-                ctx.beginPath();
-            } else if (tool == 'eraser') {
-                console.log("eraser");
-                lastPoint = null;
-                ctx.lineWidth = 20;
-                ctx.strokeStyle = "#FFF";
-                ctx.beginPath();
-            } else if (tool == 'clear') {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            } else {
-                log("Unknown tool '" + tool + "'.");
-                break;
-            }
+            drawCommandQueue.accept(ev.data);
             curTool = ev.data.slice(1);
             break;
         case 'w':
             var [role, word] = split(ev.data.slice(1), ',', 2);
-            if (role == 'draw' || role == 'guess') {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
             switch (role) {
                 case 'draw': log("Draw " + word + "!"); break;
                 case 'guess': log("Guess " + word.split('').join(' ') + "!"); break;
@@ -141,9 +202,9 @@ window.addEventListener('load', function() {
         canvas.onmousemove = function (ev) {
             var x = ~~((ev.clientX - canvas.offsetLeft) / (canvas.offsetWidth / canvas.width));
             var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
-            sock.send('d' + x + ',' + y);
+            drawCommandQueue.add('d' + x + ',' + y);
         }
-        sock.send('t' + curTool);
+        drawCommandQueue.add('t' + curTool);
         ev.preventDefault();
         return false;
     };
@@ -157,8 +218,8 @@ window.addEventListener('load', function() {
         sock.send('s');
         start.disabled = true;
         start.onclick = null;
-		document.getElementById("change-name").setAttribute("data-visible", "false");
-		document.getElementById("join").setAttribute("data-visible", "false");
+        document.getElementById("change-name").setAttribute("data-visible", "false");
+        document.getElementById("join").setAttribute("data-visible", "false");
     };
     nameSubmit.onclick = () => {
         log("Setting name '" + nameValue.value + "'");
@@ -168,10 +229,10 @@ window.addEventListener('load', function() {
     var menu = new radialMenu({spacing: 0, "deg-start": 57});
     document.onclick = () => { menu.close(); };
     menu.add("🗑", {"onclick": () => {
-        sock.send('tclear');
+        drawCommandQueue.add('tclear');
     }}); // Trash can => delete
     menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
-        sock.send('teraser');
+        drawCommandQueue.add('teraser');
     }});
     colors = [
         "#000000", "#4C4C4C", "#C1C1C1", "#FFFFFF", "#EF130B", "#740B07",
@@ -181,7 +242,7 @@ window.addEventListener('load', function() {
     ]
     for (let i = 0; i < colors.length; i++) {
         menu.add("", {"size": 0.4, "background-style": "fill: " + colors[i],
-            "onclick": () => {sock.send('tpen,' + colors[i]);}});
+            "onclick": () => {drawCommandQueue.add('tpen,' + colors[i]);}});
     }
     canvas.oncontextmenu = function(ev) {
         menu.openAt(ev.pageX, ev.pageY);
