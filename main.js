@@ -11,9 +11,9 @@ window.addEventListener('load', function() {
         var div = document.createElement('div');
         div.className = 'chat-message';
         div.innerText = msg.join(' ');
-		var chatMessages = document.getElementById('chat-messages');
+        var chatMessages = document.getElementById('chat-messages');
         chatMessages.appendChild(div);
-		chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     var getOrCreate = (id, ctor) => {
         var el = document.getElementById(id);

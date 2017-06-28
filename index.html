@@ -20,34 +20,30 @@ window.onresize = window.onload = function () {
 </script>
 </head>
 <body>
-	<header>
-		<h1>Scrawl</h1>
-	</header>
+    <header>
+        <h1>Scrawl</h1>
+    </header>
     <div id="main-container">
-	    <div id="left-section">
-			<div id="change-name" data-visible="true" class="ui-box">
-				<input id="name-value" placeholder="Anon" />
+        <div id="left-section">
+            <div id="change-name" data-visible="true" class="ui-box">
+                <input id="name-value" placeholder="Anon" />
                 <button id="name-submit" class="input-yellow">Set Name</button>
-			</div>
-			<div id="join" data-visible="true">
-				<button id="start" class="input-green" style="display:none">Start</button>
-			</div>
+            </div>
+            <div id="join" data-visible="true">
+                <button id="start" class="input-green" style="display:none">Start</button>
+            </div>
             <div id="players" class="ui-box">
                 <div class="player"><b>You: </b><span id="my-id">??</span></div>
                 <div class="player"><b>Drawer: </b><span id="drawer-id">??</span></div>
                 <div class="player"><b>Host: </b><span id="host-id">??</span></div>
                 <b>Players:</b>
             </div>
-		</div>
+        </div>
         <div id="drawing" style="cursor: not-allowed">
             <canvas id="canvas" width="400" height="400"></canvas>
         </div>
-        <!-- TODO: The layout of this is terrible, and breaks once the chat messages go
-                   below the bottom of the screen. Ideally the messages should scroll,
-                   and the chat box should be fixed at the bottom of the screen. Feel
-                   free to fix. -->
-		<div id="right-section">	
-			<div class="ui-box">
+        <div id="right-section">
+            <div class="ui-box">
                 <div id="chat">
                     <h2>Chat</h2>
                     <div id="chat-messages"></div>
@@ -55,8 +51,8 @@ window.onresize = window.onload = function () {
                         <textarea placeholder="guess" class="input-yellow"></textarea>
                     </div>
                 </div>
-			</div>
-		</div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
