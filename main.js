@@ -71,14 +71,14 @@ window.addEventListener('load', function() {
         }
         add(command) {
             if (drawerID !== myID) {
-                // TODO: Log something?
-                return;
+                throw new Error("You cannot draw, it is not your turn.");
             }
             var t = +new Date();
             this.times.push(t);
             this.commands.push(command);
             this.drawer.run(command);
             sock.send(command);
+            if (command[0] === 't') curTool = command.slice(1);
         }
         accept(command) {
             var t = +new Date();
@@ -170,12 +170,8 @@ window.addEventListener('load', function() {
             var div = document.getElementById("player" + id);
             div.parentNode.removeChild(div);
             break;
-        case 'd':
+        case 'd': case 't':
             drawCommandQueue.accept(ev.data);
-            break;
-        case 't':
-            drawCommandQueue.accept(ev.data);
-            curTool = ev.data.slice(1);
             break;
         case 'w':
             var [role, word] = split(ev.data.slice(1), ',', 2);
@@ -198,7 +194,8 @@ window.addEventListener('load', function() {
     };
     canvas.onmousedown = function (ev) {
         if (ev.button !== 0) return;
-        if (curTool == 'clear') return;
+        if (curTool === 'clear') return;
+        if (myID !== drawerID) return;
         canvas.onmousemove = function (ev) {
             var x = ~~((ev.clientX - canvas.offsetLeft) / (canvas.offsetWidth / canvas.width));
             var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
@@ -242,11 +239,14 @@ window.addEventListener('load', function() {
     ]
     for (let i = 0; i < colors.length; i++) {
         menu.add("", {"size": 0.4, "background-style": "fill: " + colors[i],
-            "onclick": () => {drawCommandQueue.add('tpen,' + colors[i]);}});
+            "onclick": () => {
+                drawCommandQueue.add('tpen,' + colors[i]);
+            }});
     }
     canvas.oncontextmenu = function(ev) {
-        menu.openAt(ev.pageX, ev.pageY);
         ev.preventDefault();
+        if (drawerID !== myID) return;
+        menu.openAt(ev.pageX, ev.pageY);
     };
     var guess = document.querySelector('#chat-input textarea');
     guess.onkeypress = function(ev) {
