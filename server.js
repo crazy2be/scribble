@@ -250,6 +250,7 @@ var server = ws.createServer(function (conn) {
                 return;
             }
             broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
+            broadcast("c0,The word was " + guess + " (or " + current_word.english + ")");
             drawing_and_word_reset();
             broadcast("e");
             tell_clients_about_new_drawing();
