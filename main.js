@@ -63,6 +63,10 @@ window.addEventListener('load', function() {
             });
             if (prop === 'name') {
                 div.innerText = id + ' ' + val;
+                if (parseInt(id) === myID) {
+                    log("Successfully set player name to " + val);
+                    nameSubmit.disabled = false;
+                }
             } else if (prop === 'state') {
                 if (val === 'lobby') div.style.color = '#999999';
                 else if (val === 'game') div.style.color = '#000000';
@@ -156,6 +160,7 @@ window.addEventListener('load', function() {
     };
     nameSubmit.onclick = () => {
         log("Setting name '" + nameValue.value + "'");
+        nameSubmit.disabled = true;
         sock.send('pname,' + nameValue.value);
     };
     var menu = new radialMenu({spacing: 0, "deg-start": 57});
