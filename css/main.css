@@ -1,0 +1,181 @@
+@font-face {
+    font-family: Pacifico;
+    src: url("fonts/Pacifico-Regular.ttf");
+}
+@font-face {
+    font-family: Righteous;
+    src: url("fonts/Righteous-Regular.ttf");
+}
+body {
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+	background: url("background-pattern/fancy-pants.jpg");
+}
+header {
+	margin-left: 20px;
+}
+header h1 {
+    font-family: 'Pacifico', cursive;
+    font-size: 60px;
+    padding-left: 10px;
+    margin: 20px 0px;
+    color: #ffffff;
+    text-shadow: 1px 1px 3px #04ff00;
+	text-align: center;
+}
+#main-container {
+	overflow: hidden;
+	height: 640px;
+}
+#left-section,
+#right-section {
+    width: 25%;
+    width: calc( (100% - 640px) / 2 );
+    float: left;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.ui-box {
+    padding: 15px;
+    border: 1px solid #7d7d7d;
+    background: #cecece;
+    border-radius: 5px;
+    box-shadow: 0px 0px 12px 3px rgba(23, 23, 23, 0.25);
+}
+
+.input-yellow {
+	border: 1px solid #a27000;
+    background: #ffd331;
+    border-radius: 5px;
+    font-family: 'Pacifico', cursive;
+    color: #755200;
+}
+.input-green {
+	border: 1px solid #006600;
+	background: #33ee33;
+    border-radius: 5px;
+	font-family: 'Pacifico', cursive;
+	color: #02542b;
+}
+
+[data-visible="true"] {
+	display: inherit;
+}
+[data-visible="false"] {
+	display: none;
+}
+
+div#change-name {
+    height: 30px;
+}
+#change-name,
+#join, 
+#player {
+	margin-bottom: 15px;
+}
+#name-value {
+	width: 90% !important;
+    width: calc( 100% - 110px ) !important;
+    height: 23px;
+    padding: 2px 10px;
+    border-radius: 5px;
+    background: #ffd331;
+    border: 1px solid #a27000;
+    color: #755200;
+    font-size: 14px;
+	font-family: 'Righteous', Arial;
+}
+#name-submit {
+    float: right;
+	font-size:14px;
+    height: 29px;
+}
+#start {
+	display: block;
+	width: 100%;
+	height: 40px;
+	font-size: 18px;
+}
+#players {
+	font-family: 'Righteous', Arial;
+}
+#drawing {
+    width: 50%;
+	width: 640px;
+    float: left;
+    padding: 20px;
+    box-sizing: border-box;	
+}
+#canvas {
+    border: 1px solid black;
+	width: 99% !important;
+    width: calc(100% - 2px ) !important;
+    border-radius: 5px;
+    box-shadow: 0px 0px 12px 3px rgba(23, 23, 23, 0.25);
+	background: white;
+}
+#right-section {
+	height: 100%;
+}
+#right-section > .ui-box {
+	height: calc(100% - 31px);
+}
+#chat {
+    height: 100%;
+    padding-bottom: 72px;
+    box-sizing: border-box;
+	position: relative;
+	font-family: Arial;
+}
+#chat h2 {
+    margin: 0px 0px 12px 0px;
+    text-align: center;
+}
+#chat-messages {
+	height: 92%;
+    height: calc( 100% - 55px );
+    border: 1px solid grey;
+    border-radius: 5px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+.chat-message {
+	padding: 7px 15px;
+}
+.chat-message:nth-child(2n) {
+	background: #ababab;
+}
+#chat-input {
+    position: absolute;
+    bottom: 0px;
+	width: 100%;
+	height: 70px;
+}
+#chat-input > textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0px;
+    height: 70px;
+    padding: 10px;
+    border: none;
+	resize: none;
+	height: 100%;
+	font-family: Arial;
+}
+.radial-menu path {
+    fill: white;
+    stroke: black;
+}
+.radial-menu text {
+    font-size: 40px;
+}
+.radial-menu g g g:hover {
+    transform: scale(1.05,1.05);
+}
+.radial-menu g g g.open {
+    transform: scale(1.1, 1.1);
+}
+#name-value {
+width: 96px;
+}

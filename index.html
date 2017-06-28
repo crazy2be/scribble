@@ -2,39 +2,7 @@
 <html>
 <meta http-equiv="content-type" content="application/html; charset=utf-8" />
 <head>
-<style>
-body {
-    display: flex;
-    margin: 0;
-    padding: 0;
-    justify-content: center;
-}
-#players {
-    width: 100px;
-}
-#canvas {
-    border: 1px solid black;
-}
-#chat {
-    width: 300px;
-}
-.radial-menu path {
-    fill: white;
-    stroke: black;
-}
-.radial-menu text {
-    font-size: 40px;
-}
-.radial-menu g g g:hover {
-    transform: scale(1.05,1.05);
-}
-.radial-menu g g g.open {
-    transform: scale(1.1, 1.1);
-}
-#name-value {
-width: 96px;
-}
-</style>
+<link rel="StyleSheet" href="/css/main.css" type="text/css" />
 <script src="radial-menu/js/radialMenu.js"></script>
 <script src="misc.js"></script>
 <script src="main.js"></script>
@@ -52,28 +20,43 @@ window.onresize = window.onload = function () {
 </script>
 </head>
 <body>
-<div id="players">
-    <div><input id="name-value" placeholder="Anon" /></div>
-    <div><button id="name-submit">Set Name</button></div>
-    <div><button id="start" style="display:none">Start</button></div>
-    <div><b>You: </b><span id="my-id">??</span></div>
-    <div><b>Drawer: </b><span id="drawer-id">??</span></div>
-    <div><b>Host: </b><span id="host-id">??</span></div>
-    <b>Players:</b>
-</div>
-<div id="drawing" style="cursor: not-allowed">
-    <canvas id="canvas" width="400" height="400"></canvas>
-</div>
-<!-- TODO: The layout of this is terrible, and breaks once the chat messages go
-           below the bottom of the screen. Ideally the messages should scroll,
-           and the chat box should be fixed at the bottom of the screen. Feel
-           free to fix. -->
-<div id="chat">
-    <b>Chat:</b>
-    <div id="chat-messages"></div>
-    <div id="chat-input">
-    <textarea placeholder="guess"></textarea>
+	<header>
+		<h1>Scrawl</h1>
+	</header>
+    <div id="main-container">
+	    <div id="left-section">
+			<div id="change-name" data-visible="true" class="ui-box">
+				<input id="name-value" placeholder="Anon" />
+                <button id="name-submit" class="input-yellow">Set Name</button>
+			</div>
+			<div id="join" data-visible="true">
+				<button id="start" class="input-green" style="display:none">Start</button>
+			</div>
+            <div id="players" class="ui-box">
+                <div class="player"><b>You: </b><span id="my-id">??</span></div>
+                <div class="player"><b>Drawer: </b><span id="drawer-id">??</span></div>
+                <div class="player"><b>Host: </b><span id="host-id">??</span></div>
+                <b>Players:</b>
+            </div>
+		</div>
+        <div id="drawing" style="cursor: not-allowed">
+            <canvas id="canvas" width="400" height="400"></canvas>
+        </div>
+        <!-- TODO: The layout of this is terrible, and breaks once the chat messages go
+                   below the bottom of the screen. Ideally the messages should scroll,
+                   and the chat box should be fixed at the bottom of the screen. Feel
+                   free to fix. -->
+		<div id="right-section">	
+			<div class="ui-box">
+                <div id="chat">
+                    <h2>Chat</h2>
+                    <div id="chat-messages"></div>
+                    <div id="chat-input">
+                        <textarea placeholder="guess" class="input-yellow"></textarea>
+                    </div>
+                </div>
+			</div>
+		</div>
     </div>
-</div>
 </body>
 </html>

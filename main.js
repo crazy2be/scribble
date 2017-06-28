@@ -11,7 +11,9 @@ window.addEventListener('load', function() {
         var div = document.createElement('div');
         div.className = 'chat-message';
         div.innerText = msg.join(' ');
-        document.getElementById('chat-messages').appendChild(div);
+		var chatMessages = document.getElementById('chat-messages');
+        chatMessages.appendChild(div);
+		chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     var getOrCreate = (id, ctor) => {
         var el = document.getElementById(id);
@@ -155,8 +157,8 @@ window.addEventListener('load', function() {
         sock.send('s');
         start.disabled = true;
         start.onclick = null;
-        nameSubmit.style.display = 'none';
-        nameValue.style.display = 'none';
+		document.getElementById("change-name").setAttribute("data-visible", "false");
+		document.getElementById("join").setAttribute("data-visible", "false");
     };
     nameSubmit.onclick = () => {
         log("Setting name '" + nameValue.value + "'");
