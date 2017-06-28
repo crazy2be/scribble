@@ -256,7 +256,14 @@ window.addEventListener('load', function() {
     canvas.oncontextmenu = function(ev) {
         ev.preventDefault();
         if (drawerID !== myID) return;
-        menu.openAt(ev.pageX, ev.pageY);
+        // Prevent us from opening off the edge of the screen.
+        menu.open();
+        var box = menu.svg.getBBox();
+        var xs = box.width / 2, ys = box.height / 2;
+        var clamp = (n, a, b) => n < a ? a : n > b ? b : n;
+        menu.openAt(
+            clamp(ev.pageX, xs, document.body.offsetWidth - xs),
+            clamp(ev.pageY, ys, document.body.offsetHeight - ys));
     };
     var guess = document.querySelector('#chat-input textarea');
     guess.onkeypress = function(ev) {
