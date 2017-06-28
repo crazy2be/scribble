@@ -56,6 +56,7 @@ function randomWord() {
 
 function fuzzyMatch(guess, word) {
     for (var lan in word) {
+        if (word[lan].length < 1) continue; // Skip the empty words.
         if (stripAccents(guess) === stripAccents(word[lan])) return true;
     }
     return false;
