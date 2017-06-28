@@ -127,16 +127,10 @@ window.addEventListener('load', function() {
                 document.getElementById('host-id').innerText = hostID;
                 break;
             } else if (prop === 'drawer') {
+                if (drawerID >= 0) drawCommandQueue.clear();
                 drawerID = parseInt(val);
                 document.getElementById('drawer-id').innerText = drawerID;
                 drawing.style.cursor = drawerID === myID ? 'crosshair' : 'not-allowed';
-                // TODO: This is the right thing to do most of the time, but
-                // is the incorrect thing to do in the case when we have just
-                // joined a game in progress. In that case, this clears the
-                // drawing when it should not. Probably we should have an
-                // explicit "queue clear" command sent by the server whenever
-                // it clears it's own queues.
-                drawCommandQueue.clear();
                 break;
             }
             log("Unknown game property", prop, val);
