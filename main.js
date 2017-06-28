@@ -205,7 +205,9 @@ window.addEventListener('load', function() {
         ev.preventDefault();
         return false;
     };
-    canvas.onmouseup = function () {
+    // Window, as opposed to canvas, in order to prevent the mouse from getting
+    // "stuck" down when released outside the canvas, or even outside the window.
+    window.onmouseup = function () {
         canvas.onmousemove = null;
     };
     var nameValue = document.getElementById('name-value');
