@@ -127,7 +127,6 @@ window.addEventListener('load', function() {
                 document.getElementById('host-id').innerText = hostID;
                 break;
             } else if (prop === 'drawer') {
-                if (drawerID >= 0) drawCommandQueue.clear();
                 drawerID = parseInt(val);
                 document.getElementById('drawer-id').innerText = drawerID;
                 drawing.style.cursor = drawerID === myID ? 'crosshair' : 'not-allowed';
@@ -173,6 +172,9 @@ window.addEventListener('load', function() {
             break;
         case 'd': case 't':
             drawCommandQueue.accept(ev.data);
+            break;
+        case 'e':
+            drawCommandQueue.clear();
             break;
         case 'w':
             var [role, word] = split(ev.data.slice(1), ',', 2);

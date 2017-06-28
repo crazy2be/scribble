@@ -145,6 +145,8 @@ var server = ws.createServer(function (conn) {
     // Is a mouse move / draw command
     //  tbrush
     // Changes the tool that is used in draw commands.
+    //  e
+    // Empties the canvas, clears all draw queues. Used when switching drawers.
     console.log("New connection")
     var my_id = -1;
     var print_not_your_turn = throttle(() => send(my_id, "c0,Not your turn to draw, or game not started!"));
@@ -224,6 +226,7 @@ var server = ws.createServer(function (conn) {
             }
             broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
             drawing_and_word_reset();
+            broadcast("e");
             tell_clients_about_new_drawing();
             break;
         case 'd': case 't':
@@ -248,6 +251,7 @@ var server = ws.createServer(function (conn) {
         if (my_id === drawing_player_id) {
             broadcast('c0,The drawer left!');
             drawing_and_word_reset();
+            broadcast("e");
             // If a tree falls in a forest... It throws an exception
             if (drawing_player_id >= 0) tell_clients_about_new_drawing();
         }
