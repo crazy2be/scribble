@@ -197,8 +197,9 @@ window.addEventListener('load', function() {
         if (ev.button !== 0) return;
         if (myID !== drawerID) return;
         canvas.onmousemove = function (ev) {
-            var x = ~~((ev.clientX - canvas.offsetLeft) / (canvas.offsetWidth / canvas.width));
-            var y = ~~((ev.clientY - canvas.offsetTop) / (canvas.offsetHeight / canvas.height));
+            var rect = canvas.getBoundingClientRect();
+            var x = ~~((ev.clientX - rect.left) / (rect.width / canvas.width));
+            var y = ~~((ev.clientY - rect.top) / (rect.height / canvas.height));
             drawCommandQueue.add('d' + x + ',' + y);
         }
         drawCommandQueue.add('tdown');
