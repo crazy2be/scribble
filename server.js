@@ -92,17 +92,29 @@ var send = (id, msg) => {
     if (!coalesce(id, msg)) console.log("Sending", msg, "to player", id);
     players[id].conn.sendText(msg);}
 
-// TODO: What we really want is next_id, like, people should draw and
-// get assigned host roles in a well-defined order. But this works for now.
-var random_id = (state) => {
-    var pred = id => true
-    if (state !== undefined) pred = id => players[id].state === state
-    return parseInt(Object.keys(players).filter(pred).random()) || -1;
+var next_id = (prev_id, state) => {
+    var ids = Object.keys(players).map(s => parseInt(s));
+    var fids = ids;
+    if (state !== undefined) {
+        fids = ids.filter(id => players[id].state === state);
+    }
+    if (ids.length === 0 || fids.length === 0) return -1;
+    if (fids.length === 1) return fids[0];
+    var id = prev_id;
+    while (true) {
+        id++;
+        if (id > next_player_id) id = 0;
+        if (fids.indexOf(id) >= 0) return id;
+        if (id === prev_id) {
+            console.log("WARNING, WE COULDNT FIND A NEXT ID (should never happen)");
+            return prev_id;
+        }
+    }
 }
 
 var drawing_and_word_reset = () => {
     drawing = [];
-    drawing_player_id = random_id(STATE_GAME);
+    drawing_player_id = next_id(drawing_player_id, STATE_GAME);
     current_word = randomWord();
     current_hint = stripAccents(current_word).replace(/[a-zA-Z]/g, "_");
 };
@@ -247,7 +259,7 @@ var server = ws.createServer(function (conn) {
         broadcast('q' + my_id);
         broadcast('c0,Player ' + name + ' with id ' + my_id + ' has quit!');
         if (my_id === host_player_id) {
-            host_player_id = random_id();
+            host_player_id = next_id(host_player_id);
             broadcast('ghost,' + host_player_id);
         }
         if (my_id === drawing_player_id) {
