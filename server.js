@@ -61,7 +61,7 @@ var players = {};
 // in case someone joins part way through.
 var drawing = [];
 
-var coalesce = () => {
+var coalesce = (() => {
     var prevID = 0;
     var numRecv = 0;
     var numSent = 0;
@@ -82,7 +82,7 @@ var coalesce = () => {
         else if (id === 0) numBroad++;
         return true;
     };
-}();
+})();
 
 var broadcast = (msg) => {
     if (!coalesce(0, msg)) console.log("Broadcasting", msg, "to players", Object.keys(players));
