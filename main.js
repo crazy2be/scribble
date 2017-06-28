@@ -39,6 +39,7 @@ window.addEventListener('load', function() {
             } else if (prop === 'drawer') {
                 drawerID = parseInt(val);
                 document.getElementById('drawer-id').innerText = drawerID;
+                drawing.style.cursor = drawerID === myID ? 'crosshair' : 'not-allowed';
                 break;
             }
             log("Unknown game property", prop, val);
@@ -143,11 +144,19 @@ window.addEventListener('load', function() {
     canvas.onmouseup = function () {
         canvas.onmousemove = null;
     };
+    var nameValue = document.getElementById('name-value');
+    var nameSubmit = document.getElementById('name-submit');
     start.onclick = () => {
         log("clicked");
         sock.send('s');
         start.disabled = true;
         start.onclick = null;
+        nameSubmit.style.display = 'none';
+        nameValue.style.display = 'none';
+    };
+    nameSubmit.onclick = () => {
+        log("Setting name '" + nameValue.value + "'");
+        sock.send('pname,' + nameValue.value);
     };
     var menu = new radialMenu({spacing: 0, "deg-start": 57});
     document.onclick = () => { menu.close(); };

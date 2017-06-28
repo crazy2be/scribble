@@ -31,6 +31,9 @@ body {
 .radial-menu g g g.open {
     transform: scale(1.1, 1.1);
 }
+#name-value {
+width: 96px;
+}
 </style>
 <script src="radial-menu/js/radialMenu.js"></script>
 <script src="misc.js"></script>
@@ -50,13 +53,15 @@ window.onresize = window.onload = function () {
 </head>
 <body>
 <div id="players">
+    <div><input id="name-value" placeholder="Anon" /></div>
+    <div><button id="name-submit">Set Name</button></div>
     <div><button id="start" style="display:none">Start</button></div>
     <div><b>You: </b><span id="my-id">??</span></div>
     <div><b>Drawer: </b><span id="drawer-id">??</span></div>
     <div><b>Host: </b><span id="host-id">??</span></div>
     <b>Players:</b>
 </div>
-<div id="drawing">
+<div id="drawing" style="cursor: not-allowed">
     <canvas id="canvas" width="400" height="400"></canvas>
 </div>
 <!-- TODO: The layout of this is terrible, and breaks once the chat messages go
