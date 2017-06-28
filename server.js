@@ -176,6 +176,8 @@ var server = ws.createServer(function (conn) {
                 return;
             }
             var tmp = misc.split(str.slice(1), ',', 2), prop = tmp[0], val = tmp[1];
+            if (prop === 'name') players[my_id].name = val;
+            else console.log(">>>ERR UNKNOWN PROP", my_id, prop, val);
             broadcast('p' + my_id + ',' + prop + ',' + val);
             break;
         case 's':
