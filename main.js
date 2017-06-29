@@ -1,7 +1,95 @@
+class Drawer {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.ctx.lineCap = 'round';
+        this.lastPoint = null;
+    }
+    run(command) {
+        var ctx = this.ctx;
+        if (command[0] === 'd') {
+            var [x, y] = split(command.slice(1), ',', 2).map(s => parseInt(s));
+            if (this.lastPoint) {
+                ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+            this.lastPoint = {x: x, y: y};
+        } else if (command[0] === 't') {
+            var [tool, args] = split(command.slice(1), ',', 2);
+            if (tool == 'pen') {
+                console.log("pen");
+                this.lastPoint = null;
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = args || "#000";
+                ctx.beginPath();
+            } else if (tool == 'eraser') {
+                console.log("eraser");
+                this.lastPoint = null;
+                ctx.lineWidth = 20;
+                ctx.strokeStyle = "#FFF";
+                ctx.beginPath();
+            } else if (tool == 'down') {
+                this.lastPoint = null;
+                ctx.beginPath();
+            } else if (tool == 'clear') {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            } else {
+                log("Unknown tool '" + tool + "'.");
+                return;
+            }
+        }
+    }
+    clear() {
+        this.run('tclear');
+        this.run('tpen');
+    }
+}
+class DrawCommandQueue {
+    constructor(drawer, sock) {
+        this.drawer = drawer;
+        this.sock = sock;
+        this.clear();
+    }
+    add(command) {
+        var t = +new Date();
+        this.times.push(t);
+        this.commands.push(command);
+        this.drawer.run(command);
+        this.sock.send(command);
+    }
+    accept(command) {
+        var t = +new Date();
+        this.acceptedCommands.push(command);
+        if (this.commands.length === 0) {
+            this.drawer.run(command);
+            return;
+        } else {
+            if (command !== this.commands[0]) {
+                log("Got out of order command!");
+                log("Expected", this.commands[0], this.times[0]);
+                log("Got", command, t);
+                // We messed up somewhere, drop everything we were predicting
+                // and just draw what has been confirmed.
+                this.commands = [];
+                this.times = [];
+                this.drawer.clear();
+                this.acceptedCommands.forEach(cmd => drawer.run(cmd));
+                return;
+            }
+            this.commands.shift();
+            this.times.shift();
+        }
+    }
+    clear() {
+        this.acceptedCommands = [];
+        this.commands = [];
+        this.times = [];
+        this.drawer.clear();
+    }
+};
 window.addEventListener('load', function() {
     var sock = new WebSocket('ws://' + location.hostname + ':8001')
-    var ctx = canvas.getContext('2d');
-    ctx.lineCap = 'round';
     var myID = -1;
     var hostID = -1;
     var drawerID = -1;
@@ -21,97 +109,7 @@ window.addEventListener('load', function() {
         el.id = id;
         return el;
     };
-    class Drawer {
-        constructor(ctx) {
-            this.ctx = ctx;
-            this.lastPoint = null;
-        }
-        run(command) {
-            var ctx = this.ctx;
-            if (command[0] === 'd') {
-                var [x, y] = split(command.slice(1), ',', 2).map(s => parseInt(s));
-                if (this.lastPoint) {
-                    ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
-                    ctx.lineTo(x, y);
-                    ctx.stroke();
-                }
-                this.lastPoint = {x: x, y: y};
-            } else if (command[0] === 't') {
-                var [tool, args] = split(command.slice(1), ',', 2);
-                if (tool == 'pen') {
-                    console.log("pen");
-                    this.lastPoint = null;
-                    ctx.lineWidth = 1;
-                    ctx.strokeStyle = args || "#000";
-                    ctx.beginPath();
-                } else if (tool == 'eraser') {
-                    console.log("eraser");
-                    this.lastPoint = null;
-                    ctx.lineWidth = 20;
-                    ctx.strokeStyle = "#FFF";
-                    ctx.beginPath();
-                } else if (tool == 'down') {
-                    this.lastPoint = null;
-                    ctx.beginPath();
-                } else if (tool == 'clear') {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                } else {
-                    log("Unknown tool '" + tool + "'.");
-                    return;
-                }
-            }
-        }
-        clear() {
-            this.ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-    }
-    class DrawCommandQueue {
-        constructor(drawer) {
-            this.acceptedCommands = [];
-            this.commands = [];
-            this.times = [];
-            this.drawer = drawer;
-        }
-        add(command) {
-            if (drawerID !== myID) {
-                throw new Error("You cannot draw, it is not your turn.");
-            }
-            var t = +new Date();
-            this.times.push(t);
-            this.commands.push(command);
-            this.drawer.run(command);
-            sock.send(command);
-        }
-        accept(command) {
-            var t = +new Date();
-            this.acceptedCommands.push(command);
-            if (drawerID !== myID) {
-                this.drawer.run(command);
-                return;
-            }
-            if (command !== this.commands[0]) {
-                log("Got out of order command!");
-                log("Expected", this.commands[0], this.times[0]);
-                log("Got", command, t);
-                // We messed up somewhere, drop everything we were predicting
-                // and just draw what has been confirmed.
-                this.commands = [];
-                this.times = [];
-                this.drawer.clear();
-                this.acceptedCommands.forEach(cmd => drawer.run(cmd));
-                return;
-            }
-            this.commands.shift();
-            this.times.shift();
-        }
-        clear() {
-            this.acceptedCommands = [];
-            this.commands = [];
-            this.times = [];
-            this.drawer.clear();
-        }
-    };
-    var drawCommandQueue = new DrawCommandQueue(new Drawer(ctx));
+    var drawCommandQueue = new DrawCommandQueue(new Drawer(canvas), sock);
     log('test');
     sock.onmessage = function (ev) {
         //console.log("Got msg", ev.data);
