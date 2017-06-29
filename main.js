@@ -170,8 +170,6 @@ window.addEventListener('load', function() {
             div.parentNode.removeChild(div);
             break;
         case 'd': case 't':
-            // TODO: Apparently pen color follows based on what the last player
-            // used.
             drawCommandQueue.accept(ev.data);
             break;
         case 'e':
