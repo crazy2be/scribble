@@ -11,6 +11,7 @@ window.addEventListener('load', function() {
         div.innerText = msg.join(' ');
         var chatMessages = document.getElementById('chat-messages');
         chatMessages.appendChild(div);
+        // TODO: Should only do this if they have not scrolled up
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     var getOrCreate = (id, ctor) => {
@@ -171,12 +172,16 @@ window.addEventListener('load', function() {
             div.parentNode.removeChild(div);
             break;
         case 'd': case 't':
+            // TODO: Apparently pen color follows based on what the last player
+            // used.
             drawCommandQueue.accept(ev.data);
             break;
         case 'e':
             drawCommandQueue.clear();
             break;
         case 'w':
+            // TODO: Should display this somewhere permenant on the screen,
+            // it can get very hard to see quickly when lots of people chatting.
             var [role, word] = split(ev.data.slice(1), ',', 2);
             switch (role) {
                 case 'draw': log("Draw " + word + "!"); break;
