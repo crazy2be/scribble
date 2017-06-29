@@ -148,8 +148,6 @@ var server = ws.createServer(function (conn) {
     //  While in lobby, can change name and face.
     //  Game starts, lobby hidden, replaced with draw surface.
     // Protocol: First letter denotes type of message
-    //  l
-    // Joins lobby
     //  l543
     // Responds with your ID
     //  ghost,543
@@ -173,40 +171,33 @@ var server = ws.createServer(function (conn) {
     // Changes the tool that is used in draw commands.
     //  e
     // Empties the canvas, clears all draw queues. Used when switching drawers.
-    console.log("New connection")
-    var my_id = -1;
+    console.log("New connection");
     var print_not_your_turn = throttle(() => send(my_id, "c0,Not your turn to draw, or game not started!"));
+
+    var my_id = next_player_id++;
+    players[my_id] = {
+        conn: conn,
+        name: "Anon " + ~~(Math.random()*1000),
+        state: STATE_LOBBY,
+        score: 0,
+    };
+    send(my_id, 'l' + my_id);
+    for (var id in players) {
+        if (parseInt(id) === my_id) continue;
+        send(my_id, 'p' + id + ',name,' + players[id].name);
+        send(my_id, 'p' + id + ',state,' + players[id].state);
+    }
+    broadcast('p' + my_id + ',name,' + players[my_id].name);
+    broadcast('p' + my_id + ',state,' + players[my_id].state);
+    if (host_player_id < 0) host_player_id = my_id;
+    send(my_id, 'ghost,' + host_player_id);
+    if (game_state == STATE_GAME) {
+        send(my_id, 's');
+        drawing.forEach(msg => send(my_id, msg));
+    }
     conn.on("text", function (str) {
         if (!coalesce(-my_id, str)) console.log("Received "+str)
         switch (str[0]) {
-        case 'l':
-            if (my_id >= 0) {
-                send(my_id, 'c0,Invalid state, already joined.');
-                conn.close();
-                return;
-            }
-            my_id = next_player_id++;
-            players[my_id] = {
-                conn: conn,
-                name: "Anon " + ~~(Math.random()*1000),
-                state: STATE_LOBBY,
-                score: 0,
-            };
-            send(my_id, 'l' + my_id);
-            for (var id in players) {
-                if (parseInt(id) === my_id) continue;
-                send(my_id, 'p' + id + ',name,' + players[id].name);
-                send(my_id, 'p' + id + ',state,' + players[id].state);
-            }
-            broadcast('p' + my_id + ',name,' + players[my_id].name);
-            broadcast('p' + my_id + ',state,' + players[my_id].state);
-            if (host_player_id < 0) host_player_id = my_id;
-            send(my_id, 'ghost,' + host_player_id);
-            if (game_state == STATE_GAME) {
-                send(my_id, 's');
-                drawing.forEach(msg => send(my_id, msg));
-            }
-            break;
         case 'p':
             if (players[my_id].state != STATE_LOBBY) {
                 send(my_id, 'c0,Cannot change player properties in game.');

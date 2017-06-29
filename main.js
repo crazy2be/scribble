@@ -193,7 +193,7 @@ window.addEventListener('load', function() {
             break;
         }
     }
-    sock.onopen = function () { sock.send('l'); };
+    sock.onopen = function () {};
     sock.onclose = function () {
         log("Disconnected.");
         document.body.style.background = 'red';
