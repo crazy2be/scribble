@@ -46,6 +46,7 @@ var words = (() => {
         return obj;
     });
 })()
+
 function randomWord() {
     return words.random();
     return "många";
@@ -53,7 +54,7 @@ function randomWord() {
     // TODO: could be a larger word list. Other languages.
     return ["apple", "pepper", "chicken", "potato", "neuken", "keuken", "många"].random();
 }
-
+var stripAccents = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 function fuzzyMatch(guess, word) {
     for (var lan in word) {
         if (word[lan].length < 1) continue; // Skip the empty words.
@@ -61,8 +62,12 @@ function fuzzyMatch(guess, word) {
     }
     return false;
 }
-
-var stripAccents = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+function toHint(word) {
+    return stripAccents(current_word.english).replace(/[a-zA-Z]/g, "_")
+}
+function toDrawer(word) {
+    return word.english;
+}
 
 // For now, only one game. Easy to change.
 
@@ -129,12 +134,12 @@ var drawing_and_word_reset = () => {
     drawing = [];
     drawing_player_id = next_id(drawing_player_id, STATE_GAME);
     current_word = randomWord();
-    current_hint = stripAccents(current_word.english).replace(/[a-zA-Z]/g, "_");
+    current_hint = toHint(current_word);
 };
 drawing_and_word_reset();
 
 var tell_clients_about_new_drawing = () => {
-    send(drawing_player_id, 'wdraw,' + current_word.english);
+    send(drawing_player_id, 'wdraw,' + toDrawer(current_word));
     for (var id in players) {
         if (id == drawing_player_id) continue;
         send(id, 'wguess,' + current_hint);
@@ -230,7 +235,7 @@ var server = ws.createServer(function (conn) {
             }
             if (drawing_player_id < 0) {
                 drawing_player_id = my_id;
-                send(my_id, 'wdraw,' + current_word.english);
+                send(my_id, 'wdraw,' + toDrawer(current_word));
             } else {
                 send(my_id, 'whint,' + current_hint);
             }
@@ -256,7 +261,7 @@ var server = ws.createServer(function (conn) {
                 return;
             }
             broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
-            broadcast("c0,The word was " + guess + " (or " + current_word.english + ")");
+            broadcast("c0,The word was " + guess + " (or " + toDrawer(current_word) + ")");
             drawing_and_word_reset();
             broadcast("e");
             tell_clients_about_new_drawing();
