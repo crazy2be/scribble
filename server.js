@@ -204,10 +204,13 @@ var server = ws.createServer(function (conn) {
                 return;
             }
             var tmp = misc.split(str.slice(1), ',', 2), prop = tmp[0], val = tmp[1];
-            // TODO: Should limit name length (and property length in general)
-            // to something reasonable, so that people don't try to set their
-            // name to bee movie script or something
-            if (prop === 'name') players[my_id].name = val;
+            if (prop === 'name') {
+                if (val.length > 20) {
+                    send(my_id, 'c0,Username too long, max 20 characters.');
+                    return;
+                }
+                players[my_id].name = val;
+            }
             else console.log(">>>ERR UNKNOWN PROP", my_id, prop, val);
             broadcast('p' + my_id + ',' + prop + ',' + val);
             break;
@@ -241,9 +244,14 @@ var server = ws.createServer(function (conn) {
             var guess = str.slice(1);
             if ((game_state !== STATE_GAME) || (my_id === drawing_player_id) ||
                     !fuzzyMatch(guess, current_word)) {
-                // TODO: Should limit chat length to some reasonable value.
-                // Also should not allow empty strings to be sent (probably
-                // should be a client-side check).
+                if (guess.length > 100) {
+                    send(my_id, 'c0,Chat message too long!');
+                    return;
+                }
+                if (guess.trim().length === 0) {
+                    send(my_id, 'c0,Chat message is entirely whitespace!');
+                    return;
+                }
                 broadcast('c' + my_id + ',' + guess);
                 return;
             }

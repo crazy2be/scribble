@@ -271,8 +271,10 @@ window.addEventListener('load', function() {
     var guess = document.querySelector('#chat-input textarea');
     guess.onkeypress = function(ev) {
         if (ev.keyCode == 13) {
-            sock.send('c' + guess.value);
-            guess.value = '';
+            if (guess.value.trim().length > 0) {
+                sock.send('c' + guess.value);
+                guess.value = '';
+            }
             return false;
         }
     };

@@ -26,8 +26,8 @@ window.onresize = window.onload = function () {
     <div id="main-container">
         <div id="left-section">
             <div id="change-name" data-visible="true" class="ui-box">
-                <input id="name-value" placeholder="Anon" />
-                <button id="name-submit" class="input-yellow">Set Name</button>
+                <input id="name-value" placeholder="Anon" maxlength="20" />
+                <button id="name-submit" disabled class="input-yellow">Set Name</button>
             </div>
             <div id="join" data-visible="true">
                 <button id="start" class="input-green" style="display:none">Start</button>
@@ -51,7 +51,7 @@ window.onresize = window.onload = function () {
                     <h2>Chat</h2>
                     <div id="chat-messages"></div>
                     <div id="chat-input">
-                        <textarea placeholder="guess" class="input-yellow"></textarea>
+                        <textarea placeholder="guess" class="input-yellow" maxlength="100"></textarea>
                     </div>
                 </div>
             </div>
