@@ -69,9 +69,14 @@ div#change-name {
     height: 30px;
 }
 #change-name,
-#join, 
+#join,
+#word,
 #player {
     margin-bottom: 15px;
+}
+#word {
+    font-family: 'Righteous', Arial;
+    font-size: 18px;
 }
 #name-value {
     width: 90% !important;

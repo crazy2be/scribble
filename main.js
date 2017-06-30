@@ -102,6 +102,7 @@ window.addEventListener('load', function() {
         // TODO: Should only do this if they have not scrolled up
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+    var $ = (q) => document.querySelector(q);
     var getOrCreate = (id, ctor) => {
         var el = document.getElementById(id);
         if (el) return el;
@@ -176,15 +177,16 @@ window.addEventListener('load', function() {
             drawCommandQueue.clear();
             break;
         case 'w':
-            // TODO: Should display this somewhere permenant on the screen,
-            // it can get very hard to see quickly when lots of people chatting.
             var [role, word] = split(ev.data.slice(1), ',', 2);
+            var txt = "???";
             switch (role) {
-                case 'draw': log("Draw " + word + "!"); break;
-                case 'guess': log("Guess " + word.split('').join(' ') + "!"); break;
-                case 'hint': log("Hint " + word.split('').join(' ') + '!'); break;
-                default: log("WARNING, UNKNOWN ROLE '" + role + "'"); break;
+                case 'draw': txt ="Draw " + word + "!"; break;
+                case 'guess': txt = "Guess " + word.split('').join(' ') + "!"; break;
+                case 'hint': txt = "Hint " + word.split('').join(' ') + '!'; break;
+                default: txt = "WARNING, UNKNOWN ROLE '" + role + "'"; break;
             }
+            $('#word').setAttribute('data-visible', true);
+            log(txt); $('#word').innerText = txt;
             break;
         default:
             log("Unhandled message '" + ev.data + "'.");
