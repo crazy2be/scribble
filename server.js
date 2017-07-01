@@ -135,10 +135,12 @@ var drawing_and_word_reset = () => {
     drawing_player_id = next_id(drawing_player_id, STATE_GAME);
     current_word = randomWord();
     current_hint = toHint(current_word);
+    for (var id in players) players[id].voting_to_skip = false;
 };
 drawing_and_word_reset();
 
 var tell_clients_about_new_drawing = () => {
+    broadcast("e");
     send(drawing_player_id, 'wdraw,' + toDrawer(current_word));
     for (var id in players) {
         if (id == drawing_player_id) continue;
@@ -257,13 +259,33 @@ var server = ws.createServer(function (conn) {
                     send(my_id, 'c0,Chat message is entirely whitespace!');
                     return;
                 }
+                if (guess.trim() === "/skip") {
+                    if (players[my_id].state !== STATE_GAME) {
+                        send(my_id, 'c0,Cannot vote to skip if not in game!');
+                        return;
+                    }
+                    if (players[my_id].voting_to_skip) {
+                        send(my_id, 'c0,Already voted to skip!');
+                        return;
+                    }
+                    players[my_id].voting_to_skip = true;
+                    var num_votes = Object.keys(players).filter(id => players[id].voting_to_skip).length;
+                    var votes_needed = Math.ceil(Object.keys(players).filter(id => players[id].state === STATE_GAME).length/2.);
+                    broadcast("c0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
+                    if (num_votes >= votes_needed) {
+                        broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") was skipped!");
+                        broadcast("c0,The word was " + toDrawer(current_word));
+                        drawing_and_word_reset();
+                        tell_clients_about_new_drawing();
+                    }
+                    return;
+                }
                 broadcast('c' + my_id + ',' + guess);
                 return;
             }
             broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
             broadcast("c0,The word was " + guess + " (or " + toDrawer(current_word) + ")");
             drawing_and_word_reset();
-            broadcast("e");
             tell_clients_about_new_drawing();
             break;
         case 'd': case 't':
@@ -290,7 +312,6 @@ var server = ws.createServer(function (conn) {
         if (my_id === drawing_player_id) {
             broadcast('c0,The drawer left!');
             drawing_and_word_reset();
-            broadcast("e");
             // If a tree falls in a forest... It throws an exception
             if (drawing_player_id >= 0) tell_clients_about_new_drawing();
         }
