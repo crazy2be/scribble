@@ -83,7 +83,7 @@ class DrawCommandQueue {
                 this.commands = [];
                 this.times = [];
                 this.drawer.clear();
-                this.acceptedCommands.forEach(cmd => drawer.run(cmd));
+                this.acceptedCommands.forEach(cmd => this.drawer.run(cmd));
                 return;
             }
             this.commands.shift();
