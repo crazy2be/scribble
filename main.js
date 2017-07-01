@@ -123,12 +123,15 @@ window.addEventListener('load', function() {
             var [prop, val] = split(ev.data.slice(1), ',', 2);
             if (prop === 'host') {
                 hostID = parseInt(val);
-                if (hostID === myID) start.style.display = '';
                 document.getElementById('host-id').innerText = hostID;
+                if (hostID === myID) start.style.display = '';
                 break;
             } else if (prop === 'drawer') {
+                var prev = $('#player' + drawerID);
+                if (prev) prev.classList.remove('drawer');
                 drawerID = parseInt(val);
                 document.getElementById('drawer-id').innerText = drawerID;
+                $('#player' + drawerID).classList.add('drawer');
                 drawing.style.cursor = drawerID === myID ? 'crosshair' : 'not-allowed';
                 break;
             }
@@ -147,7 +150,7 @@ window.addEventListener('load', function() {
             var div = getOrCreate("player" + id, () => {
                 var div = document.createElement("div");
                 div.className = "player";
-                div.style.color = '#999999';
+                div.style.color = "#999999";
                 players.appendChild(div);
                 return div;
             });
