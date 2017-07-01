@@ -1,3 +1,12 @@
+var log = function(...msg) {
+    var div = document.createElement('div');
+    div.className = 'chat-message';
+    div.innerText = msg.join(' ');
+    var chatMessages = document.getElementById('chat-messages');
+    chatMessages.appendChild(div);
+    // TODO: Should only do this if they have not scrolled up
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
 class Drawer {
     constructor(canvas) {
         this.canvas = canvas;
@@ -93,15 +102,6 @@ window.addEventListener('load', function() {
     var myID = -1;
     var hostID = -1;
     var drawerID = -1;
-    var log = function(...msg) {
-        var div = document.createElement('div');
-        div.className = 'chat-message';
-        div.innerText = msg.join(' ');
-        var chatMessages = document.getElementById('chat-messages');
-        chatMessages.appendChild(div);
-        // TODO: Should only do this if they have not scrolled up
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
     var $ = (q) => document.querySelector(q);
     var getOrCreate = (id, ctor) => {
         var el = document.getElementById(id);
