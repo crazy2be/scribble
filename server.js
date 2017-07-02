@@ -270,7 +270,7 @@ var server = ws.createServer(function (conn) {
                     }
                     players[my_id].voting_to_skip = true;
                     var num_votes = Object.keys(players).filter(id => players[id].voting_to_skip).length;
-                    var votes_needed = Math.ceil(2*Object.keys(players).filter(id => players[id].state === STATE_GAME).length/3.);
+                    var votes_needed = Math.floor(2*Object.keys(players).filter(id => players[id].state === STATE_GAME).length/3.);
                     broadcast("c0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
                     if (num_votes >= votes_needed) {
                         broadcast("c0,Player " + drawing_player_id + " (name " + players[drawing_player_id].name + ") was skipped!");
