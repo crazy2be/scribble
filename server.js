@@ -48,25 +48,25 @@ var words = (() => {
 })()
 
 function randomWord() {
-    return words.random();
+    var word = words.random();
+    return {
+        hint: () => stripAccents(word.english).replace(/[a-zA-Z]/g, "_"),
+        drawer: () => word.english,
+        match: (guess) => matchAnyLanguage(word.word, guess),
+        word: word,
+    };
     return "många";
     return 'apple'; // for testing
     // TODO: could be a larger word list. Other languages.
     return ["apple", "pepper", "chicken", "potato", "neuken", "keuken", "många"].random();
 }
 var stripAccents = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
-function fuzzyMatch(guess, word) {
+function matchAnyLanguage(guess, word) {
     for (var lan in word) {
         if (word[lan].length < 1) continue; // Skip the empty words.
         if (stripAccents(guess) === stripAccents(word[lan])) return true;
     }
     return false;
-}
-function toHint(word) {
-    return stripAccents(current_word.english).replace(/[a-zA-Z]/g, "_")
-}
-function toDrawer(word) {
-    return word.english;
 }
 
 // For now, only one game. Easy to change.
@@ -134,14 +134,14 @@ var drawing_and_word_reset = () => {
     drawing = [];
     drawing_player_id = next_id(drawing_player_id, STATE_GAME);
     current_word = randomWord();
-    current_hint = toHint(current_word);
+    current_hint = current_word.hint();
     for (var id in players) players[id].voting_to_skip = false;
 };
 drawing_and_word_reset();
 
 var tell_clients_about_new_drawing = () => {
     broadcast("e");
-    send(drawing_player_id, 'wdraw,' + toDrawer(current_word));
+    send(drawing_player_id, 'wdraw,' + current_word.drawer());
     for (var id in players) {
         if (id == drawing_player_id) continue;
         send(id, 'wguess,' + current_hint);
@@ -237,7 +237,7 @@ var server = ws.createServer(function (conn) {
             }
             if (drawing_player_id < 0) {
                 drawing_player_id = my_id;
-                send(my_id, 'wdraw,' + toDrawer(current_word));
+                send(my_id, 'wdraw,' + current_word.drawer());
             } else {
                 send(my_id, 'whint,' + current_hint);
             }
@@ -250,7 +250,7 @@ var server = ws.createServer(function (conn) {
         case 'c':
             var guess = str.slice(1);
             if ((game_state !== STATE_GAME) || (my_id === drawing_player_id) ||
-                    !fuzzyMatch(guess, current_word)) {
+                    !current_word.match(guess)) {
                 if (guess.length > 100) {
                     send(my_id, 'c0,Chat message too long!');
                     return;
@@ -274,7 +274,7 @@ var server = ws.createServer(function (conn) {
                     broadcast("c0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
                     if (num_votes >= votes_needed) {
                         broadcast("c0,Player " + drawing_player_id + " (name " + players[drawing_player_id].name + ") was skipped!");
-                        broadcast("c0,The word was " + toDrawer(current_word));
+                        broadcast("c0,The word was " + current_word.drawer());
                         drawing_and_word_reset();
                         tell_clients_about_new_drawing();
                     }
@@ -284,7 +284,7 @@ var server = ws.createServer(function (conn) {
                 return;
             }
             broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
-            broadcast("c0,The word was " + guess + " (or " + toDrawer(current_word) + ")");
+            broadcast("c0,The word was " + guess + " (or " + current_word.drawer() + ")");
             drawing_and_word_reset();
             tell_clients_about_new_drawing();
             break;
