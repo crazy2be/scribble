@@ -273,7 +273,7 @@ var server = ws.createServer(function (conn) {
                     var votes_needed = Math.ceil(2*Object.keys(players).filter(id => players[id].state === STATE_GAME).length/3.);
                     broadcast("c0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
                     if (num_votes >= votes_needed) {
-                        broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") was skipped!");
+                        broadcast("c0,Player " + drawing_player_id + " (name " + players[drawing_player_id].name + ") was skipped!");
                         broadcast("c0,The word was " + toDrawer(current_word));
                         drawing_and_word_reset();
                         tell_clients_about_new_drawing();
