@@ -52,7 +52,7 @@ function randomWord() {
     return {
         hint: () => stripAccents(word.english).replace(/[a-zA-Z]/g, "_"),
         drawer: () => word.english,
-        match: (guess) => matchAnyLanguage(word.word, guess),
+        match: (guess) => matchAnyLanguage(word, guess),
         word: word,
     };
     return "många";
@@ -61,7 +61,7 @@ function randomWord() {
     return ["apple", "pepper", "chicken", "potato", "neuken", "keuken", "många"].random();
 }
 var stripAccents = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
-function matchAnyLanguage(guess, word) {
+function matchAnyLanguage(word, guess) {
     for (var lan in word) {
         if (word[lan].length < 1) continue; // Skip the empty words.
         if (stripAccents(guess) === stripAccents(word[lan])) return true;
