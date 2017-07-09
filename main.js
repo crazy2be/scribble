@@ -1,3 +1,4 @@
+"use strict"
 var log = function(...msg) {
     var div = document.createElement('div');
     div.className = 'chat-message';
@@ -19,20 +20,28 @@ class Drawer {
         var canvas = this.canvas, w = canvas.width, h = canvas.height;
         var raw = this.ctx.getImageData(0, 0, w, h);
         var ix = (x, y) => y*w + x;
-        var px = (x, y) => {
-            var i = y*w*4 + x*4;
-            return [raw.data[i], raw.data[i+1], raw.data[i+2]];
+        var px = (i) => {
+            i = i*4;
+            return [raw.data[i], raw.data[i+1], raw.data[i+2], raw.data[i+3]];
         };
-        var [br, bg, bb] = px(bx, by);
+//         var notWhite = 0;
+//         for (var i = 0; i < w*h; i++) {
+//             var [r, g, b] = px(i);
+//             var a = raw.data[i*4 + 3];
+//             if (r > 0 || g > 0 || b > 0 || a > 0) {
+//                 notWhite++;
+//             }
+//         }
+//         console.log("Not white", notWhite);
+        var [br, bg, bb, ba] = px(ix(bx, by));
         var stencil = new Uint8Array(w*h);
-        var ci = 0;
-        for (var cx = 0; cx < w; cx++) {
-            for (var cy = 0; cy < h; cy++) {
-                var [cr, cg, cb] = px(cx, cy);
-                if (br == cr && bg == cg && bb == cb) {
-                    stencil[ci/4] = SELF;
+        for (var cy = 0; cy < h; cy++) {
+            for (var cx = 0; cx < w; cx++) {
+                var ci = ix(cx, cy);
+                var [cr, cg, cb, ca] = px(ci);
+                if (br == cr && bg == cg && bb == cb && ba == ca) {
+                    stencil[ci] = SELF;
                 }
-                ci += 4;
             }
         }
         var dfs = (x, y) => {
@@ -46,18 +55,47 @@ class Drawer {
             }
             console.log("done", x, y);
         };
-        dfs(bx, by);
-        for (var cx = 0; cx < w; cx++) {
-            for (var cy = 0; cy < h; cy++) {
-                var i = ix(cx, cy);
-                if (stencil[i] !== VISITED) continue;
-                console.log("Setting color at ", cx, cy);
-                raw.data[i*4] = color.r;
-                raw.data[i*4+1] = color.g;
-                raw.data[i*4+2] = color.b;
+        //dfs(bx, by);
+        var color = 0;
+        var bfs = (x, y) => {
+            var Q = [[x, y]];
+            while (Q.length) {
+                var cur = Q.shift();
+                var adj = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+                for (var i = 0; i < adj.length; i++) {
+                    var x = adj[i][0] + cur[0], y = adj[i][1] + cur[1];
+                    if (stencil[ix(x, y)] !== SELF) continue;
+                    stencil[ix(x, y)] = VISITED;
+                    Q.push([x, y]);
+                }
             }
+        };
+        bfs(bx, by);
+
+        var totalSet = 0;
+        for (var i = 0; i < w*h; i++) {
+            if (stencil[i] !== VISITED) continue;
+            totalSet++;
+            if (stencil[i] === OTHER) {
+                raw.data[i*4] = 255;
+                raw.data[i*4+1] = 0;
+                raw.data[i*4+2] = 0;
+            } else if (stencil[i] === SELF) {
+                raw.data[i*4] = 0;
+                raw.data[i*4+1] = 255;
+                raw.data[i*4+2] = 0;
+            } else if (stencil[i] === VISITED) {
+                raw.data[i*4] = 0;
+                raw.data[i*4+1] = 0;
+                raw.data[i*4+2] = 255;
+            }
+            raw.data[i*4] = 100;
+            raw.data[i*4+1] = 100;
+            raw.data[i*4+2] = 100;
+            raw.data[i*4+3] = 255;
         }
-        this.ctx.putImageData(raw, 0, 0);
+        console.log("Set a total of ", totalSet, "pixels to red");
+        this.ctx.putImageData(new ImageData(raw.data, w, h), 0, 0);
     }
     run(command) {
         var ctx = this.ctx;
