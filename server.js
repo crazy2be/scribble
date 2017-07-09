@@ -55,6 +55,7 @@ function randomWord() {
         match: (guess) => matchAnyLanguage(word, guess),
         word: word,
     };
+    //var lang = Object.keys(word).filter(
     return "många";
     return 'apple'; // for testing
     // TODO: could be a larger word list. Other languages.

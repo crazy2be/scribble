@@ -14,6 +14,51 @@ class Drawer {
         this.ctx.lineCap = 'round';
         this.lastPoint = null;
     }
+    bucketFill(bx, by, color) {
+        var OTHER = 0, SELF = 1, VISITED = 2;
+        var canvas = this.canvas, w = canvas.width, h = canvas.height;
+        var raw = this.ctx.getImageData(0, 0, w, h);
+        var ix = (x, y) => y*w + x;
+        var px = (x, y) => {
+            var i = y*w*4 + x*4;
+            return [raw.data[i], raw.data[i+1], raw.data[i+2]];
+        };
+        var [br, bg, bb] = px(bx, by);
+        var stencil = new Uint8Array(w*h);
+        var ci = 0;
+        for (var cx = 0; cx < w; cx++) {
+            for (var cy = 0; cy < h; cy++) {
+                var [cr, cg, cb] = px(cx, cy);
+                if (br == cr && bg == cg && bb == cb) {
+                    stencil[ci/4] = SELF;
+                }
+                ci += 4;
+            }
+        }
+        var dfs = (x, y) => {
+            if (stencil[ix(x, y)] !== SELF) return;
+            if (x < 0 || x > w || y < 0 || y > h) return;
+            console.log("visiting", x, y, stencil[ix(x, y)]);
+            stencil[ix(x, y)] = VISITED;
+            var adj = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            for (var i = 0; i < adj.length; i++) {
+                dfs(adj[i][0] + x, adj[i][1] + y);
+            }
+            console.log("done", x, y);
+        };
+        dfs(bx, by);
+        for (var cx = 0; cx < w; cx++) {
+            for (var cy = 0; cy < h; cy++) {
+                var i = ix(cx, cy);
+                if (stencil[i] !== VISITED) continue;
+                console.log("Setting color at ", cx, cy);
+                raw.data[i*4] = color.r;
+                raw.data[i*4+1] = color.g;
+                raw.data[i*4+2] = color.b;
+            }
+        }
+        this.ctx.putImageData(raw, 0, 0);
+    }
     run(command) {
         var ctx = this.ctx;
         if (command[0] === 'd') {
@@ -41,6 +86,8 @@ class Drawer {
             } else if (tool == 'down') {
                 this.lastPoint = null;
                 ctx.beginPath();
+            } else if (tool == 'bucket') {
+                this.bucketFill(300, 300, {r:100,g:100,b:100});
             } else if (tool == 'clear') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             } else {
@@ -243,6 +290,9 @@ window.addEventListener('load', function() {
     }}); // Trash can => delete
     menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
         drawCommandQueue.add('teraser');
+    }});
+    menu.add('b', {"onclick": () => {
+        drawCommandQueue.add('tbucket');
     }});
     var colors = [
         "#000000", "#4C4C4C", "#C1C1C1", "#FFFFFF", "#EF130B", "#740B07",
