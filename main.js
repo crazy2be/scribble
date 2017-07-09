@@ -24,15 +24,6 @@ class Drawer {
             i = i*4;
             return [raw.data[i], raw.data[i+1], raw.data[i+2], raw.data[i+3]];
         };
-//         var notWhite = 0;
-//         for (var i = 0; i < w*h; i++) {
-//             var [r, g, b] = px(i);
-//             var a = raw.data[i*4 + 3];
-//             if (r > 0 || g > 0 || b > 0 || a > 0) {
-//                 notWhite++;
-//             }
-//         }
-//         console.log("Not white", notWhite);
         var [br, bg, bb, ba] = px(ix(bx, by));
         var stencil = new Uint8Array(w*h);
         for (var cy = 0; cy < h; cy++) {
@@ -56,7 +47,7 @@ class Drawer {
             console.log("done", x, y);
         };
         //dfs(bx, by);
-        var color = 0;
+
         var bfs = (x, y) => {
             var Q = [[x, y]];
             while (Q.length) {
@@ -72,30 +63,14 @@ class Drawer {
         };
         bfs(bx, by);
 
-        var totalSet = 0;
         for (var i = 0; i < w*h; i++) {
             if (stencil[i] !== VISITED) continue;
-            totalSet++;
-            if (stencil[i] === OTHER) {
-                raw.data[i*4] = 255;
-                raw.data[i*4+1] = 0;
-                raw.data[i*4+2] = 0;
-            } else if (stencil[i] === SELF) {
-                raw.data[i*4] = 0;
-                raw.data[i*4+1] = 255;
-                raw.data[i*4+2] = 0;
-            } else if (stencil[i] === VISITED) {
-                raw.data[i*4] = 0;
-                raw.data[i*4+1] = 0;
-                raw.data[i*4+2] = 255;
-            }
             raw.data[i*4] = 100;
             raw.data[i*4+1] = 100;
             raw.data[i*4+2] = 100;
             raw.data[i*4+3] = 255;
         }
-        console.log("Set a total of ", totalSet, "pixels to red");
-        this.ctx.putImageData(new ImageData(raw.data, w, h), 0, 0);
+        this.ctx.putImageData(raw, 0, 0);
     }
     run(command) {
         var ctx = this.ctx;
