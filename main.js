@@ -13,7 +13,6 @@ class Drawer {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.ctx.lineCap = 'round';
-        this.lastPoint = null;
     }
     bucketFill(bx, by, color) {
         var OTHER = 0, SELF = 1, VISITED = 2;
@@ -65,42 +64,45 @@ class Drawer {
 
         for (var i = 0; i < w*h; i++) {
             if (stencil[i] !== VISITED) continue;
-            raw.data[i*4] = 100;
-            raw.data[i*4+1] = 100;
-            raw.data[i*4+2] = 100;
+            raw.data[i*4] = color.r;
+            raw.data[i*4+1] = color.g;
+            raw.data[i*4+2] = color.b;
             raw.data[i*4+3] = 255;
         }
         this.ctx.putImageData(raw, 0, 0);
+    }
+    parseColor(hex) {
+        if (hex[0] === '#') hex = hex.slice(1);
+        if (hex.length === 3) hex.split('').map(s => s + s).join('');
+        var r = hex.slice(0, 2), g = hex.slice(2, 4), b = hex.slice(4, 6);
+        return {r: parseInt(r, 16), g: parseInt(g, 16), b: parseInt(b, 16)};
     }
     run(command) {
         var ctx = this.ctx;
         if (command[0] === 'd') {
             var [x, y] = split(command.slice(1), ',', 2).map(s => parseInt(s));
-            if (this.lastPoint) {
-                ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-            }
-            this.lastPoint = {x: x, y: y};
+            ctx.lineTo(x, y);
+            ctx.stroke();
         } else if (command[0] === 't') {
             var [tool, args] = split(command.slice(1), ',', 2);
+            if (['pen', 'eraser', 'bucket'].includes(tool)) this.tool = tool;
+            console.log(tool);
             if (tool == 'pen') {
-                console.log("pen");
-                this.lastPoint = null;
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = args || "#000";
-                ctx.beginPath();
             } else if (tool == 'eraser') {
-                console.log("eraser");
-                this.lastPoint = null;
                 ctx.lineWidth = 20;
                 ctx.strokeStyle = "#FFF";
-                ctx.beginPath();
             } else if (tool == 'down') {
-                this.lastPoint = null;
-                ctx.beginPath();
+                var [x, y] = split(args, ',', 2).map(c => parseInt(c))
+                if (this.tool == 'bucket') {
+                    this.bucketFill(x, y, this.bucketColor);
+                } else {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                }
             } else if (tool == 'bucket') {
-                this.bucketFill(300, 300, {r:100,g:100,b:100});
+                this.bucketColor = this.parseColor(args);
             } else if (tool == 'clear') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             } else {
@@ -261,16 +263,21 @@ window.addEventListener('load', function() {
         log("Disconnected.");
         document.body.style.background = 'red';
     };
+    var mouseToCanvas = (mx, my) => {
+        var rect = canvas.getBoundingClientRect();
+        var x = ~~((mx - rect.left) / (rect.width / canvas.width));
+        var y = ~~((my - rect.top) / (rect.height / canvas.height));
+        return [x, y];
+    };
     canvas.onmousedown = function (ev) {
         if (ev.button !== 0) return;
         if (myID !== drawerID) return;
         canvas.onmousemove = function (ev) {
-            var rect = canvas.getBoundingClientRect();
-            var x = ~~((ev.clientX - rect.left) / (rect.width / canvas.width));
-            var y = ~~((ev.clientY - rect.top) / (rect.height / canvas.height));
+            var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
             drawCommandQueue.add('d' + x + ',' + y);
         }
-        drawCommandQueue.add('tdown');
+        var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
+        drawCommandQueue.add('tdown,' + x + ',' + y);
         ev.preventDefault();
         return false;
     };
@@ -304,9 +311,7 @@ window.addEventListener('load', function() {
     menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
         drawCommandQueue.add('teraser');
     }});
-    menu.add('b', {"onclick": () => {
-        drawCommandQueue.add('tbucket');
-    }});
+    var bucket = menu.add('b', {onclick: (ev) => {bucket.open(); ev.stopPropagation()}});
     var colors = [
         "#000000", "#4C4C4C", "#C1C1C1", "#FFFFFF", "#EF130B", "#740B07",
         "#FF7100", "#C23800", "#FFE400", "#E8A200", "#00CC00",
@@ -321,6 +326,10 @@ window.addEventListener('load', function() {
             "onclick": () => {
                 drawCommandQueue.add('tpen,' + colors[i]);
             }}));
+        bucket.add("", {
+            "background-style": "fill: " + colors[i],
+            "onclick": () => {
+                drawCommandQueue.add('tbucket,' + colors[i]);}});
     }
     canvas.oncontextmenu = function(ev) {
         ev.preventDefault();
