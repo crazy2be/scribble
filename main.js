@@ -80,6 +80,8 @@ class Drawer {
     run(command) {
         var ctx = this.ctx;
         if (command[0] === 'd') {
+            // TODO: We shouldn't let people draw lines if they are in bucket
+            // mode.
             var [x, y] = split(command.slice(1), ',', 2).map(s => parseInt(s));
             ctx.lineTo(x, y);
             ctx.stroke();
