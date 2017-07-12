@@ -156,27 +156,27 @@ var server = ws.createServer(function (conn) {
     //  Load page -> lobby. Join with default name, assigned ID.
     //  While in lobby, can change name and face.
     //  Game starts, lobby hidden, replaced with draw surface.
-    // Protocol: First letter denotes type of message
-    //  l543
+    // Protocol: Comma seperated, defined order. First item is message type.
+    //  l,543
     // Responds with your ID
-    //  ghost,543
+    //  g,host,543
     // The game host is player id 543
     //  s
     // Game is started / start game
-    //  pname,Trump
+    //  p,name,Trump
     // Set your player properties, here name to trump. Only valid in lobby.
-    //  p543,name,Trump
+    //  p,543,name,Trump
     // Signifies a player with id 543 has changed name to Trump. May be new
     // or existing player.
-    //  q543
+    //  q,543
     // Player id 543 has quit
-    //  c543,A message
+    //  c,543,A message
     // Is a chat message / guess
-    //  wdraw,chicken
+    //  w,draw,chicken
     // Is a word for the drawer to draw
-    //  d257,356
+    //  d,257,356
     // Is a mouse move / draw command
-    //  tbrush
+    //  t,brush
     // Changes the tool that is used in draw commands.
     //  e
     // Empties the canvas, clears all draw queues. Used when switching drawers.
