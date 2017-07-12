@@ -275,6 +275,8 @@ window.addEventListener('load', function() {
         if (ev.button !== 0) return;
         if (myID !== drawerID) return;
         canvas.onmousemove = function (ev) {
+            // TODO: You shouldn't be able to draw even if the mouse is down
+            // once it is no longer your turn.
             var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
             drawCommandQueue.add('d' + x + ',' + y);
         }
