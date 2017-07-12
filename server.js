@@ -252,44 +252,44 @@ var server = ws.createServer(function (conn) {
             break;
         case 'c':
             var guess = msg;
-            if ((game_state !== STATE_GAME) || (my_id === drawing_player_id) ||
-                    !current_word.match(guess)) {
-                if (guess.length > 100) {
-                    send(my_id, 'c,0,Chat message too long!');
-                    return;
-                }
-                if (guess.trim().length === 0) {
-                    send(my_id, 'c,0,Chat message is entirely whitespace!');
-                    return;
-                }
-                if (guess.trim() === "/skip") {
-                    if (players[my_id].state !== STATE_GAME) {
-                        send(my_id, 'c,0,Cannot vote to skip if not in game!');
-                        return;
-                    }
-                    if (players[my_id].voting_to_skip) {
-                        send(my_id, 'c,0,Already voted to skip!');
-                        return;
-                    }
-                    players[my_id].voting_to_skip = true;
-                    var num_votes = Object.keys(players).filter(id => players[id].voting_to_skip).length;
-                    var votes_needed = Math.floor(2*Object.keys(players).filter(id => players[id].state === STATE_GAME).length/3.);
-                    broadcast("c,0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
-                    if (num_votes >= votes_needed) {
-                        broadcast("c,0,Player " + drawing_player_id + " (name " + players[drawing_player_id].name + ") was skipped!");
-                        broadcast("c,0,The word was " + current_word.drawer());
-                        drawing_and_word_reset();
-                        tell_clients_about_new_drawing();
-                    }
-                    return;
-                }
-                broadcast('c,' + my_id + ',' + guess);
+            if (guess.length > 100) {
+                send(my_id, 'c,0,Chat message too long!');
                 return;
             }
-            broadcast("c,0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
-            broadcast("c,0,The word was " + guess + " (or " + current_word.drawer() + ")");
-            drawing_and_word_reset();
-            tell_clients_about_new_drawing();
+            if (guess.trim().length === 0) {
+                send(my_id, 'c,0,Chat message is entirely whitespace!');
+                return;
+            }
+            if (guess.trim() === "/skip") {
+                if (players[my_id].state !== STATE_GAME) {
+                    send(my_id, 'c,0,Cannot vote to skip if not in game!');
+                    return;
+                }
+                if (players[my_id].voting_to_skip) {
+                    send(my_id, 'c,0,Already voted to skip!');
+                    return;
+                }
+                players[my_id].voting_to_skip = true;
+                var num_votes = Object.keys(players).filter(id => players[id].voting_to_skip).length;
+                var votes_needed = Math.floor(2*Object.keys(players).filter(id => players[id].state === STATE_GAME).length/3.);
+                broadcast("c,0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
+                if (num_votes >= votes_needed) {
+                    broadcast("c,0,Player " + drawing_player_id + " (name " + players[drawing_player_id].name + ") was skipped!");
+                    broadcast("c,0,The word was " + current_word.drawer());
+                    drawing_and_word_reset();
+                    tell_clients_about_new_drawing();
+                }
+                return;
+            }
+            if ((game_state === STATE_GAME) && (my_id !== drawing_player_id) &&
+                    current_word.match(guess)) {
+                broadcast("c,0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
+                broadcast("c,0,The word was " + guess + " (or " + current_word.drawer() + ")");
+                drawing_and_word_reset();
+                tell_clients_about_new_drawing();
+                return;
+            }
+            broadcast('c,' + my_id + ',' + guess);
             break;
         case 'd': case 't':
             if (my_id != drawing_player_id || game_state !== STATE_GAME) {
