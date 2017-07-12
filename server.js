@@ -86,14 +86,15 @@ var coalesce = (() => {
     var numBroad = 0;
     var different = (a, b) => a !== b && a !== -b && a !== 0 && b !== 0;
     return (id, msg) => {
-        if ((numRecv + numSent + numBroad) > 0 && (msg[0] !== 'd' || different(id, prevID))) {
+        var typ = misc.split(msg, ',', 2)[0];
+        if ((numRecv + numSent + numBroad) > 0 && (typ !== 'd' || different(id, prevID))) {
             if (numRecv > 0) console.log("Received", numRecv, "draw messages from", prevID)
             if (numSent > 0) console.log("Sent", numSent, "draw messages to player", prevID);
             if (numBroad > 0) console.log("Broadcast", numBroad, "draw messages to players", Object.keys(players));
             numRecv = numSent = numBroad = 0;
             return false;
         }
-        if (msg[0] !== 'd') return false;
+        if (typ !== 'd') return false;
         if (id !== 0) prevID = Math.abs(id);
         if (id < 0) numRecv++;
         else if (id > 0) numSent++;
@@ -142,12 +143,12 @@ drawing_and_word_reset();
 
 var tell_clients_about_new_drawing = () => {
     broadcast("e");
-    send(drawing_player_id, 'wdraw,' + current_word.drawer());
+    send(drawing_player_id, 'w,draw,' + current_word.drawer());
     for (var id in players) {
         if (id == drawing_player_id) continue;
-        send(id, 'wguess,' + current_hint);
+        send(id, 'w,guess,' + current_hint);
     }
-    broadcast('gdrawer,' + drawing_player_id);
+    broadcast('g,drawer,' + drawing_player_id);
 };
 
 var server = ws.createServer(function (conn) {
@@ -180,7 +181,7 @@ var server = ws.createServer(function (conn) {
     //  e
     // Empties the canvas, clears all draw queues. Used when switching drawers.
     console.log("New connection");
-    var print_not_your_turn = throttle(() => send(my_id, "c0,Not your turn to draw, or game not started!"));
+    var print_not_your_turn = throttle(() => send(my_id, "c,0,Not your turn to draw, or game not started!"));
 
     var my_id = next_player_id++;
     players[my_id] = {
@@ -189,46 +190,47 @@ var server = ws.createServer(function (conn) {
         state: STATE_LOBBY,
         score: 0,
     };
-    send(my_id, 'l' + my_id);
+    send(my_id, 'l,' + my_id);
     for (var id in players) {
         if (parseInt(id) === my_id) continue;
-        send(my_id, 'p' + id + ',name,' + players[id].name);
-        send(my_id, 'p' + id + ',state,' + players[id].state);
+        send(my_id, 'p,' + id + ',name,' + players[id].name);
+        send(my_id, 'p,' + id + ',state,' + players[id].state);
     }
-    broadcast('p' + my_id + ',name,' + players[my_id].name);
-    broadcast('p' + my_id + ',state,' + players[my_id].state);
+    broadcast('p,' + my_id + ',name,' + players[my_id].name);
+    broadcast('p,' + my_id + ',state,' + players[my_id].state);
     if (host_player_id < 0) host_player_id = my_id;
-    send(my_id, 'ghost,' + host_player_id);
+    send(my_id, 'g,host,' + host_player_id);
     if (game_state == STATE_GAME) {
         send(my_id, 's');
         drawing.forEach(msg => send(my_id, msg));
     }
     conn.on("text", function (str) {
         if (!coalesce(-my_id, str)) console.log("Received "+str)
-        switch (str[0]) {
+        var tmp = misc.split(str, ',', 2), typ = tmp[0], msg = tmp[1];
+        switch (typ) {
         case 'p':
             if (players[my_id].state != STATE_LOBBY) {
-                send(my_id, 'c0,Cannot change player properties in game.');
+                send(my_id, 'c,0,Cannot change player properties in game.');
                 return;
             }
-            var tmp = misc.split(str.slice(1), ',', 2), prop = tmp[0], val = tmp[1];
+            var tmp = misc.split(msg, ',', 2), prop = tmp[0], val = tmp[1];
             if (prop === 'name') {
                 if (val.length > 20) {
-                    send(my_id, 'c0,Username too long, max 20 characters.');
+                    send(my_id, 'c,0,Username too long, max 20 characters.');
                     return;
                 }
                 players[my_id].name = val;
             }
             else console.log(">>>ERR UNKNOWN PROP", my_id, prop, val);
-            broadcast('p' + my_id + ',' + prop + ',' + val);
+            broadcast('p,' + my_id + ',' + prop + ',' + val);
             break;
         case 's':
             if (players[my_id].state != STATE_LOBBY) {
-                send(my_id, "c0,Cannot join if not in lobby.")
+                send(my_id, "c,0,Cannot join if not in lobby.")
                 return;
             }
             if ((game_state !== STATE_GAME) && (my_id !== host_player_id)) {
-                send(my_id, "c0,You are not the host, cannot start game.");
+                send(my_id, "c,0,You are not the host, cannot start game.");
                 return;
             }
             if (my_id === host_player_id) {
@@ -238,54 +240,54 @@ var server = ws.createServer(function (conn) {
             }
             if (drawing_player_id < 0) {
                 drawing_player_id = my_id;
-                send(my_id, 'wdraw,' + current_word.drawer());
+                send(my_id, 'w,draw,' + current_word.drawer());
             } else {
-                send(my_id, 'whint,' + current_hint);
+                send(my_id, 'w,hint,' + current_hint);
             }
-            send(my_id, 'gdrawer,' + drawing_player_id);
+            send(my_id, 'g,drawer,' + drawing_player_id);
 
             players[my_id].state = STATE_GAME;
-            broadcast('p' + my_id + ',state,' + players[my_id].state);
-            broadcast('c0,' + players[my_id].name + ' has joined!');
+            broadcast('p,' + my_id + ',state,' + players[my_id].state);
+            broadcast('c,0,' + players[my_id].name + ' has joined!');
             break;
         case 'c':
-            var guess = str.slice(1);
+            var guess = msg;
             if ((game_state !== STATE_GAME) || (my_id === drawing_player_id) ||
                     !current_word.match(guess)) {
                 if (guess.length > 100) {
-                    send(my_id, 'c0,Chat message too long!');
+                    send(my_id, 'c,0,Chat message too long!');
                     return;
                 }
                 if (guess.trim().length === 0) {
-                    send(my_id, 'c0,Chat message is entirely whitespace!');
+                    send(my_id, 'c,0,Chat message is entirely whitespace!');
                     return;
                 }
                 if (guess.trim() === "/skip") {
                     if (players[my_id].state !== STATE_GAME) {
-                        send(my_id, 'c0,Cannot vote to skip if not in game!');
+                        send(my_id, 'c,0,Cannot vote to skip if not in game!');
                         return;
                     }
                     if (players[my_id].voting_to_skip) {
-                        send(my_id, 'c0,Already voted to skip!');
+                        send(my_id, 'c,0,Already voted to skip!');
                         return;
                     }
                     players[my_id].voting_to_skip = true;
                     var num_votes = Object.keys(players).filter(id => players[id].voting_to_skip).length;
                     var votes_needed = Math.floor(2*Object.keys(players).filter(id => players[id].state === STATE_GAME).length/3.);
-                    broadcast("c0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
+                    broadcast("c,0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
                     if (num_votes >= votes_needed) {
-                        broadcast("c0,Player " + drawing_player_id + " (name " + players[drawing_player_id].name + ") was skipped!");
-                        broadcast("c0,The word was " + current_word.drawer());
+                        broadcast("c,0,Player " + drawing_player_id + " (name " + players[drawing_player_id].name + ") was skipped!");
+                        broadcast("c,0,The word was " + current_word.drawer());
                         drawing_and_word_reset();
                         tell_clients_about_new_drawing();
                     }
                     return;
                 }
-                broadcast('c' + my_id + ',' + guess);
+                broadcast('c,' + my_id + ',' + guess);
                 return;
             }
-            broadcast("c0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
-            broadcast("c0,The word was " + guess + " (or " + current_word.drawer() + ")");
+            broadcast("c,0,Player " + my_id + " (name " + players[my_id].name + ") wins!");
+            broadcast("c,0,The word was " + guess + " (or " + current_word.drawer() + ")");
             drawing_and_word_reset();
             tell_clients_about_new_drawing();
             break;
@@ -297,21 +299,21 @@ var server = ws.createServer(function (conn) {
             drawing.push(str);
             broadcast(str);
             break;
-        default: broadcast('c0,Unhandled message "' + str + '", ignoring.'); break;
+        default: broadcast('c,0,Unhandled message "' + str + '", ignoring.'); break;
         }
     })
     conn.on("close", function (code, reason) {
         console.log("Connection closed")
         var name = players[my_id].name;
         delete players[my_id];
-        broadcast('q' + my_id);
-        broadcast('c0,Player ' + name + ' with id ' + my_id + ' has quit!');
+        broadcast('q,' + my_id);
+        broadcast('c,0,Player ' + name + ' with id ' + my_id + ' has quit!');
         if (my_id === host_player_id) {
             host_player_id = next_id(host_player_id);
-            broadcast('ghost,' + host_player_id);
+            broadcast('g,host,' + host_player_id);
         }
         if (my_id === drawing_player_id) {
-            broadcast('c0,The drawer left!');
+            broadcast('c,0,The drawer left!');
             drawing_and_word_reset();
             // If a tree falls in a forest... It throws an exception
             if (drawing_player_id >= 0) tell_clients_about_new_drawing();

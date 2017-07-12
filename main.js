@@ -79,14 +79,15 @@ class Drawer {
     }
     run(command) {
         var ctx = this.ctx;
-        if (command[0] === 'd') {
+        var [typ, msg] = split(command, ',', 2);
+        if (typ === 'd') {
             // TODO: We shouldn't let people draw lines if they are in bucket
             // mode.
-            var [x, y] = split(command.slice(1), ',', 2).map(s => parseInt(s));
+            var [x, y] = split(msg, ',', 2).map(s => parseInt(s));
             ctx.lineTo(x, y);
             ctx.stroke();
-        } else if (command[0] === 't') {
-            var [tool, args] = split(command.slice(1), ',', 2);
+        } else if (typ === 't') {
+            var [tool, args] = split(msg, ',', 2);
             if (['pen', 'eraser', 'bucket'].includes(tool)) this.tool = tool;
             console.log(tool);
             if (tool == 'pen') {
@@ -114,8 +115,8 @@ class Drawer {
         }
     }
     clear() {
-        this.run('tclear');
-        this.run('tpen');
+        this.run('t,clear');
+        this.run('t,pen');
     }
 }
 class DrawCommandQueue {
@@ -178,13 +179,14 @@ window.addEventListener('load', function() {
     log('test');
     sock.onmessage = function (ev) {
         //console.log("Got msg", ev.data);
-        switch (ev.data[0]) {
+        var [typ, msg] = split(ev.data, ',', 2);
+        switch (typ) {
         case 'l':
-            myID = parseInt(ev.data.slice(1));
+            myID = parseInt(msg);
             document.getElementById("my-id").innerText = myID;
             break;
         case 'g':
-            var [prop, val] = split(ev.data.slice(1), ',', 2);
+            var [prop, val] = split(msg, ',', 2);
             if (prop === 'host') {
                 hostID = parseInt(val);
                 document.getElementById('host-id').innerText = hostID;
@@ -206,11 +208,11 @@ window.addEventListener('load', function() {
             start.style.display = '';
             break;
         case 'c':
-            var [id, msg] = split(ev.data.slice(1), ',', 2);
+            var [id, msg] = split(msg, ',', 2);
             log(id, msg);
             break;
         case 'p':
-            var [id, prop, val] = split(ev.data.slice(1), ',', 3);
+            var [id, prop, val] = split(msg, ',', 3);
             var div = getOrCreate("player" + id, () => {
                 var div = document.createElement("div");
                 div.className = "player";
@@ -233,7 +235,7 @@ window.addEventListener('load', function() {
             }
             break;
         case 'q':
-            var id = ev.data.slice(1);
+            var id = msg;
             var div = document.getElementById("player" + id);
             div.parentNode.removeChild(div);
             break;
@@ -244,7 +246,7 @@ window.addEventListener('load', function() {
             drawCommandQueue.clear();
             break;
         case 'w':
-            var [role, word] = split(ev.data.slice(1), ',', 2);
+            var [role, word] = split(msg, ',', 2);
             var txt = "???";
             switch (role) {
                 case 'draw': txt ="Draw " + word + "!"; break;
@@ -278,10 +280,10 @@ window.addEventListener('load', function() {
             // TODO: You shouldn't be able to draw even if the mouse is down
             // once it is no longer your turn.
             var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
-            drawCommandQueue.add('d' + x + ',' + y);
+            drawCommandQueue.add('d,' + x + ',' + y);
         }
         var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
-        drawCommandQueue.add('tdown,' + x + ',' + y);
+        drawCommandQueue.add('t,down,' + x + ',' + y);
         ev.preventDefault();
         return false;
     };
@@ -303,17 +305,17 @@ window.addEventListener('load', function() {
     nameSubmit.onclick = () => {
         log("Setting name '" + nameValue.value + "'");
         nameSubmit.disabled = true;
-        sock.send('pname,' + nameValue.value);
+        sock.send('p,name,' + nameValue.value);
     };
     var menu = new radialMenu({spacing: 0, "deg-start": 57});
     document.onclick = () => { menu.close(); };
     menu.add("🗑", {"onclick": () => {
-        drawCommandQueue.add('tclear');
-        drawCommandQueue.add('tpen,#OOOOOO');
+        drawCommandQueue.add('t,clear');
+        drawCommandQueue.add('t,pen,#OOOOOO');
         colorItems[0].open();
     }}); // Trash can => delete
     menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
-        drawCommandQueue.add('teraser');
+        drawCommandQueue.add('t,eraser');
     }});
     var bucket = menu.add('b', {onclick: (ev) => {bucket.open(); ev.stopPropagation()}});
     var colors = [
@@ -328,12 +330,12 @@ window.addEventListener('load', function() {
             "size": 0.4,
             "background-style": "fill: " + colors[i],
             "onclick": () => {
-                drawCommandQueue.add('tpen,' + colors[i]);
+                drawCommandQueue.add('t,pen,' + colors[i]);
             }}));
         bucket.add("", {
             "background-style": "fill: " + colors[i],
             "onclick": () => {
-                drawCommandQueue.add('tbucket,' + colors[i]);}});
+                drawCommandQueue.add('t,bucket,' + colors[i]);}});
     }
     canvas.oncontextmenu = function(ev) {
         ev.preventDefault();
@@ -351,7 +353,7 @@ window.addEventListener('load', function() {
     guess.onkeypress = function(ev) {
         if (ev.keyCode == 13) {
             if (guess.value.trim().length > 0) {
-                sock.send('c' + guess.value);
+                sock.send('c,' + guess.value);
                 guess.value = '';
             }
             return false;
