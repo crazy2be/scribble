@@ -291,7 +291,7 @@ var server = ws.createServer(function (conn) {
             }
             broadcast('c,' + my_id + ',' + guess);
             break;
-        case 'd': case 't':
+        case 'd':
             if (my_id != drawing_player_id || game_state !== STATE_GAME) {
                 print_not_your_turn();
                 return;

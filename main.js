@@ -79,44 +79,56 @@ class Drawer {
     }
     run(command) {
         var ctx = this.ctx;
-        var [typ, msg] = split(command, ',', 2);
-        if (typ === 'd') {
+        var [d, typ, msg] = split(command, ',', 3);
+        switch (typ) {
+        case 'm':
             // TODO: We shouldn't let people draw lines if they are in bucket
             // mode.
             var [x, y] = split(msg, ',', 2).map(s => parseInt(s));
             ctx.lineTo(x, y);
             ctx.stroke();
-        } else if (typ === 't') {
+            break;
+        case 't':
             var [tool, args] = split(msg, ',', 2);
-            if (['pen', 'eraser', 'bucket'].includes(tool)) this.tool = tool;
-            console.log(tool);
-            if (tool == 'pen') {
+            console.log("Switched to tool", tool);
+            this.tool = tool;
+            switch (tool) {
+            case 'pen':
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = args || "#000";
-            } else if (tool == 'eraser') {
+                break;
+            case 'eraser':
                 ctx.lineWidth = 20;
                 ctx.strokeStyle = "#FFF";
-            } else if (tool == 'down') {
-                var [x, y] = split(args, ',', 2).map(c => parseInt(c))
-                if (this.tool == 'bucket') {
-                    this.bucketFill(x, y, this.bucketColor);
-                } else {
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                }
-            } else if (tool == 'bucket') {
+                break;
+            case 'bucket':
                 this.bucketColor = this.parseColor(args);
-            } else if (tool == 'clear') {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            } else {
-                log("Unknown tool '" + tool + "'.");
-                return;
+                break;
+            default:
+                console.log("Unknown tool", tool);
+                break;
             }
+            break;
+        case 'd':
+            var [x, y] = split(msg, ',', 2).map(c => parseInt(c))
+            if (this.tool == 'bucket') {
+                this.bucketFill(x, y, this.bucketColor);
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            }
+            break;
+        case 'clear':
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            break;
+        default:
+            console.log("Unknown draw command", command);
+            break;
         }
     }
     clear() {
-        this.run('t,clear');
-        this.run('t,pen');
+        this.run('d,clear');
+        this.run('d,t,pen');
     }
 }
 class DrawCommandQueue {
@@ -239,7 +251,7 @@ window.addEventListener('load', function() {
             var div = document.getElementById("player" + id);
             div.parentNode.removeChild(div);
             break;
-        case 'd': case 't':
+        case 'd':
             drawCommandQueue.accept(ev.data);
             break;
         case 'e':
@@ -267,31 +279,7 @@ window.addEventListener('load', function() {
         log("Disconnected.");
         document.body.style.background = 'red';
     };
-    var mouseToCanvas = (mx, my) => {
-        var rect = canvas.getBoundingClientRect();
-        var x = ~~((mx - rect.left) / (rect.width / canvas.width));
-        var y = ~~((my - rect.top) / (rect.height / canvas.height));
-        return [x, y];
-    };
-    canvas.onmousedown = function (ev) {
-        if (ev.button !== 0) return;
-        if (myID !== drawerID) return;
-        canvas.onmousemove = function (ev) {
-            // TODO: You shouldn't be able to draw even if the mouse is down
-            // once it is no longer your turn.
-            var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
-            drawCommandQueue.add('d,' + x + ',' + y);
-        }
-        var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
-        drawCommandQueue.add('t,down,' + x + ',' + y);
-        ev.preventDefault();
-        return false;
-    };
-    // Window, as opposed to canvas, in order to prevent the mouse from getting
-    // "stuck" down when released outside the canvas, or even outside the window.
-    window.onmouseup = function () {
-        canvas.onmousemove = null;
-    };
+
     var nameValue = document.getElementById('name-value');
     var nameSubmit = document.getElementById('name-submit');
     start.onclick = () => {
@@ -307,15 +295,56 @@ window.addEventListener('load', function() {
         nameSubmit.disabled = true;
         sock.send('p,name,' + nameValue.value);
     };
+
+    var guess = document.querySelector('#chat-input textarea');
+    guess.onkeypress = function(ev) {
+        if (ev.keyCode == 13) {
+            if (guess.value.trim().length > 0) {
+                sock.send('c,' + guess.value);
+                guess.value = '';
+            }
+            return false;
+        }
+    };
+
+    setupDrawTools(drawCommandQueue, () => myID === drawerID);
+});
+
+function setupDrawTools(drawCommandQueue, isDrawTurn) {
+    var mouseToCanvas = (mx, my) => {
+        var rect = canvas.getBoundingClientRect();
+        var x = ~~((mx - rect.left) / (rect.width / canvas.width));
+        var y = ~~((my - rect.top) / (rect.height / canvas.height));
+        return [x, y];
+    };
+    canvas.onmousedown = function (ev) {
+        if (ev.button !== 0) return;
+        if (!isDrawTurn()) return;
+        canvas.onmousemove = function (ev) {
+            if (!isDrawTurn()) return;
+            var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
+            drawCommandQueue.add('d,m,' + x + ',' + y);
+        }
+        var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
+        drawCommandQueue.add('d,d,' + x + ',' + y);
+        ev.preventDefault();
+        return false;
+    };
+    // Window, as opposed to canvas, in order to prevent the mouse from getting
+    // "stuck" down when released outside the canvas, or even outside the window.
+    window.onmouseup = function () {
+        canvas.onmousemove = null;
+    };
+
     var menu = new radialMenu({spacing: 0, "deg-start": 57});
     document.onclick = () => { menu.close(); };
     menu.add("🗑", {"onclick": () => {
-        drawCommandQueue.add('t,clear');
-        drawCommandQueue.add('t,pen,#OOOOOO');
+        drawCommandQueue.add('d,clear');
+        drawCommandQueue.add('d,t,pen,#OOOOOO');
         colorItems[0].open();
     }}); // Trash can => delete
     menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
-        drawCommandQueue.add('t,eraser');
+        drawCommandQueue.add('d,t,eraser');
     }});
     var bucket = menu.add('b', {onclick: (ev) => {bucket.open(); ev.stopPropagation()}});
     var colors = [
@@ -330,16 +359,16 @@ window.addEventListener('load', function() {
             "size": 0.4,
             "background-style": "fill: " + colors[i],
             "onclick": () => {
-                drawCommandQueue.add('t,pen,' + colors[i]);
+                drawCommandQueue.add('d,t,pen,' + colors[i]);
             }}));
         bucket.add("", {
             "background-style": "fill: " + colors[i],
             "onclick": () => {
-                drawCommandQueue.add('t,bucket,' + colors[i]);}});
+                drawCommandQueue.add('d,t,bucket,' + colors[i]);}});
     }
     canvas.oncontextmenu = function(ev) {
         ev.preventDefault();
-        if (drawerID !== myID) return;
+        if (!isDrawTurn()) return;
         // Prevent us from opening off the edge of the screen.
         menu.open();
         var box = menu.svg.getBBox();
@@ -349,14 +378,4 @@ window.addEventListener('load', function() {
             clamp(ev.pageX, xs, document.body.offsetWidth - xs),
             clamp(ev.pageY, ys, document.body.offsetHeight - ys));
     };
-    var guess = document.querySelector('#chat-input textarea');
-    guess.onkeypress = function(ev) {
-        if (ev.keyCode == 13) {
-            if (guess.value.trim().length > 0) {
-                sock.send('c,' + guess.value);
-                guess.value = '';
-            }
-            return false;
-        }
-    };
-});
+}
