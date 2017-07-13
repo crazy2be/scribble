@@ -103,6 +103,13 @@ var coalesce = (() => {
     };
 })();
 
+var num_players = (state, cond) => {
+    var state_filt = (id) => players[id].state === state;
+    if (!state) state_filt = (id) => true;
+    var cond_filt = cond && (id => cond(players[id])) || () => true;
+    return Object.keys(players).filter(state_filt).filter(cond_filt).length;
+}
+
 var broadcast = (msg) => {
     if (!coalesce(0, msg)) console.log("Broadcasting", msg, "to players", Object.keys(players));
     for (var id in players) { players[id].conn.sendText(msg) }};
@@ -144,11 +151,23 @@ drawing_and_word_reset();
 var tell_clients_about_new_drawing = () => {
     broadcast("e");
     send(drawing_player_id, 'w,draw,' + current_word.drawer());
+    tell_clients_about_new_hint();
+    broadcast('g,drawer,' + drawing_player_id);
+};
+
+var compute_next_hint = () => {
+    var tmp = current_hint.split('');
+    var blankIndex = tmp.map((c, i) => [c, i]).filter(a => a[0] === '_').map(a => a[1]).random();
+    tmp[blankIndex] = current_word.drawer()[blankIndex];
+    current_hint = tmp.join(''); // Strings are immutable, have to do a funny dance.
+};
+
+var tell_clients_about_new_hint = () => {
     for (var id in players) {
+        players[id].voting_for_hint = false;
         if (id == drawing_player_id) continue;
         send(id, 'w,guess,' + current_hint);
     }
-    broadcast('g,drawer,' + drawing_player_id);
 };
 
 var server = ws.createServer(function (conn) {
@@ -270,14 +289,33 @@ var server = ws.createServer(function (conn) {
                     return;
                 }
                 players[my_id].voting_to_skip = true;
-                var num_votes = Object.keys(players).filter(id => players[id].voting_to_skip).length;
-                var votes_needed = Math.floor(2*Object.keys(players).filter(id => players[id].state === STATE_GAME).length/3.);
+                var num_votes = num_players(STATE_GAME, p => p.voting_to_skip);
+                var votes_needed = Math.floor(2*num_players(STATE_GAME)/3.);
                 broadcast("c,0," + my_id + " voted to skip, " + num_votes + " / " + votes_needed);
                 if (num_votes >= votes_needed) {
                     broadcast("c,0,Player " + drawing_player_id + " (name " + players[drawing_player_id].name + ") was skipped!");
                     broadcast("c,0,The word was " + current_word.drawer());
                     drawing_and_word_reset();
                     tell_clients_about_new_drawing();
+                }
+                return;
+            }
+            if (guess.trim() === "/hint") {
+                if (players[my_id].state !== STATE_GAME) {
+                    send(my_id, 'c,0,Cannot vote for hints if not in game!');
+                    return;
+                }
+                if (players[my_id].voting_for_hint) {
+                    send(my_id, 'c,0,Already voted for hint');
+                    return;
+                }
+                players[my_id].voting_for_hint = true;
+                var num_votes = num_players(STATE_GAME, p => p.voting_for_hint);
+                var votes_needed = Math.ceil(num_players(STATE_GAME)/2.);
+                broadcast("c,0," + my_id + " voted for a hint, " + num_votes + " / " + votes_needed);
+                if (num_votes >= votes_needed) {
+                    compute_next_hint();
+                    tell_clients_about_new_hint();
                 }
                 return;
             }
