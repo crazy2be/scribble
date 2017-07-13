@@ -82,8 +82,8 @@ class Drawer {
         var [d, typ, msg] = split(command, ',', 3);
         switch (typ) {
         case 'm':
-            // TODO: We shouldn't let people draw lines if they are in bucket
-            // mode.
+            if (!['pen', 'eraser'].includes(this.tool))
+                throw "Should not recieve mouse move update while using tool " + this.tool;
             var [x, y] = split(msg, ',', 2).map(s => parseInt(s));
             ctx.lineTo(x, y);
             ctx.stroke();
@@ -172,6 +172,9 @@ class DrawCommandQueue {
         this.commands = [];
         this.times = [];
         this.drawer.clear();
+    }
+    tool() {
+        return this.drawer.tool;
     }
 };
 window.addEventListener('load', function() {
@@ -320,15 +323,16 @@ function setupDrawTools(drawCommandQueue, isDrawTurn) {
     canvas.onmousedown = function (ev) {
         if (ev.button !== 0) return;
         if (!isDrawTurn()) return;
-        canvas.onmousemove = function (ev) {
-            if (!isDrawTurn()) return;
-            var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
-            drawCommandQueue.add('d,m,' + x + ',' + y);
-        }
         var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
         drawCommandQueue.add('d,d,' + x + ',' + y);
         ev.preventDefault();
-        return false;
+        if (['pen', 'eraser'].includes(drawCommandQueue.tool())) {
+            canvas.onmousemove = function (ev) {
+                if (!isDrawTurn()) return;
+                var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
+                drawCommandQueue.add('d,m,' + x + ',' + y);
+            }
+        }
     };
     // Window, as opposed to canvas, in order to prevent the mouse from getting
     // "stuck" down when released outside the canvas, or even outside the window.
