@@ -340,7 +340,7 @@ function setupDrawTools(drawCommandQueue, isDrawTurn) {
         canvas.onmousemove = null;
     };
 
-    var menu = new radialMenu({spacing: 0, "deg-start": 57});
+    var menu = new radialMenu({spacing: 0, "deg-start": 45});
     document.onclick = () => { menu.close(); };
     menu.add("🗑", {"onclick": () => {
         drawCommandQueue.add('d,clear');
