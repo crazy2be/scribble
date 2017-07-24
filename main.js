@@ -265,8 +265,10 @@ window.addEventListener('load', function() {
             var txt = "???";
             switch (role) {
                 case 'draw': txt ="Draw " + word + "!"; break;
-                case 'guess': txt = "Guess " + word.split('').join(' ') + "!"; break;
-                case 'hint': txt = "Hint " + word.split('').join(' ') + '!'; break;
+                case 'guess': case 'hint':
+                    // \u00a0 is a non-breaking space, so that we get larger spaces between words than
+                    // between letters.
+                    txt = "Guess " + word.split('').map(c => c == ' ' ? '\u00a0' : c).join(' ') + "!"; break;
                 default: txt = "WARNING, UNKNOWN ROLE '" + role + "'"; break;
             }
             $('#word').setAttribute('data-visible', true);
