@@ -50,7 +50,7 @@ var words = (() => {
 function randomWord() {
     var word = words.random();
     return {
-        hint: () => stripAccents(word.english).replace(/[a-zA-Z]/g, "_"),
+        hint: () => stripAccents(word.english).replace(/[a-zA-Z.]/g, "_"),
         drawer: () => word.english,
         match: (guess) => matchAnyLanguage(word, guess),
         word: word,
