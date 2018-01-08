@@ -11,6 +11,7 @@ body {
     padding: 0;
     justify-content: center;
     background: url("background-pattern/fancy-pants.jpg");
+    background-position-x: 50vw;
 }
 header {
     margin-left: 20px;
