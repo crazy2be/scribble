@@ -106,7 +106,7 @@ var coalesce = (() => {
 var num_players = (state, cond) => {
     var state_filt = (id) => players[id].state === state;
     if (!state) state_filt = (id) => true;
-    var cond_filt = cond && (id => cond(players[id])) || () => true;
+    var cond_filt = cond && (id => cond(players[id])) || (() => true);
     return Object.keys(players).filter(state_filt).filter(cond_filt).length;
 }
 
