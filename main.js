@@ -181,6 +181,7 @@ window.addEventListener('load', function() {
     var sock = new WebSocket((() => {
         var url = new URL(document.location.href);
         url.protocol = 'ws:';
+        url.pathname += 'socket/';
         return url.toString();
     })())
     var myID = -1;
