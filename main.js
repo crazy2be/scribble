@@ -178,7 +178,11 @@ class DrawCommandQueue {
     }
 };
 window.addEventListener('load', function() {
-    var sock = new WebSocket('ws://' + location.hostname + ':8001')
+    var sock = new WebSocket((() => {
+        var url = new URL(document.location.href);
+        url.protocol = 'ws:';
+        return url.toString();
+    })())
     var myID = -1;
     var hostID = -1;
     var drawerID = -1;

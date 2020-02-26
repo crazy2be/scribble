@@ -3,13 +3,13 @@ var http = require('http')
 var fs = require('fs')
 var misc = require('./misc')
 
-var app = http.createServer(handler)
+var app = http.createServer()
 var port = Number(process.env.PORT || 8000);
 app.listen(port, function() {
   console.log("Ready at http://localhost:" + port + "/index.html");
 });
 
-function handler(req, res) {
+app.on('request', function (req, res) {
     fs.readFile(__dirname + req['url'], function(err, data) {
         if (err) {
             res.writeHead(404);
@@ -19,7 +19,7 @@ function handler(req, res) {
         res.writeHead(200);
         res.end(data);
     });
-}
+});
  
 Array.prototype.random = function () {
   return this[Math.floor((Math.random()*this.length))];
@@ -170,7 +170,7 @@ var tell_clients_about_new_hint = () => {
     }
 };
 
-var wss = new WebSocket.Server({port: 8001});
+var wss = new WebSocket.Server({server: app});
 wss.on('connection', function (conn) {
     // Flow:
     //  Load page -> lobby. Join with default name, assigned ID.
