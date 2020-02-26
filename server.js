@@ -10,14 +10,22 @@ app.listen(port, function() {
 });
 
 app.on('request', function (req, res) {
-    fs.readFile(__dirname + req['url'], function(err, data) {
-        if (err) {
-            res.writeHead(404);
-            res.end("File not found!");
-            return;
-        }
+    var url = req['url'];
+    var path;
+    var map = {'/': '/index.html', '/main.js': '/main.js', '/misc.js': '/misc.js', '/radialMenu.js': '/radial-menu/js/radialMenu.js'};
+    var error = (num, desc) => { res.writeHead(num); res.end(desc); console.log(`${num} ${url}`)};
+
+    if (url.startsWith('/css/')) {
+        path = __dirname + url;
+    } else if (map[url]) {
+        path = __dirname + map[url];
+    } else return error(403, "Access denied");
+
+    fs.readFile(path, function(err, data) {
+        if (err) return error(404, "File not found");
         res.writeHead(200);
         res.end(data);
+        console.log("200 " + url);
     });
 });
  
