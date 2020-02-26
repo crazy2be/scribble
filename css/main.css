@@ -13,16 +13,12 @@ body {
     background: url("background-pattern/fancy-pants.jpg");
     background-position-x: 50vw;
 }
-header {
-    margin-left: 20px;
-}
 header h1 {
     font-family: 'Pacifico', cursive;
-	font-size: 50px;
+    font-size: 50px;
     margin: 10px 0px;
     color: #ffffff;
     text-shadow: 1px 1px 3px #04ff00;
-    text-align: center;
 }
 #main-container {
     overflow: hidden;
