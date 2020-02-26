@@ -1,4 +1,4 @@
-var ws = require("nodejs-websocket")
+var WebSocket = require("ws")
 var http = require('http')
 var fs = require('fs')
 var misc = require('./misc')
@@ -112,11 +112,11 @@ var num_players = (state, cond) => {
 
 var broadcast = (msg) => {
     if (!coalesce(0, msg)) console.log("Broadcasting", msg, "to players", Object.keys(players));
-    for (var id in players) { players[id].conn.sendText(msg) }};
+    for (var id in players) { players[id].conn.send(msg) }};
 
 var send = (id, msg) => {
     if (!coalesce(id, msg)) console.log("Sending", msg, "to player", id);
-    players[id].conn.sendText(msg);}
+    players[id].conn.send(msg);}
 
 var next_id = (prev_id, state) => {
     var ids = Object.keys(players).map(s => parseInt(s));
@@ -170,7 +170,8 @@ var tell_clients_about_new_hint = () => {
     }
 };
 
-var server = ws.createServer(function (conn) {
+var wss = new WebSocket.Server({port: 8001});
+wss.on('connection', function (conn) {
     // Flow:
     //  Load page -> lobby. Join with default name, assigned ID.
     //  While in lobby, can change name and face.
@@ -223,7 +224,7 @@ var server = ws.createServer(function (conn) {
         send(my_id, 's');
         drawing.forEach(msg => send(my_id, msg));
     }
-    conn.on("text", function (str) {
+    conn.on("message", function (str) {
         if (!coalesce(-my_id, str)) console.log("Received "+str)
         var tmp = misc.split(str, ',', 2), typ = tmp[0], msg = tmp[1];
         switch (typ) {
@@ -360,4 +361,4 @@ var server = ws.createServer(function (conn) {
     conn.on("error", function (err) {
         console.log("Error (probably doesn't matter):", err);
     });
-}).listen(8001)
+})

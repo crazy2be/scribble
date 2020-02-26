@@ -1,0 +1,7 @@
+{
+  "name": "scribble",
+  "version": "0.0.1",
+  "dependencies": {
+    "ws": "^7.2.1"
+  }
+}
