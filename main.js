@@ -219,7 +219,7 @@ window.addEventListener('load', function() {
                 document.getElementById('drawer-id').innerText = drawerID;
                 $('#player' + drawerID).classList.add('drawer');
                 drawing.style.cursor = drawerID === myID ? 'crosshair' : 'not-allowed';
-                canvas.style.background = 'white';
+                $('#canvas-overlay').style.visibility = 'hidden';
                 break;
             }
             log("Unknown game property", prop, val);
@@ -386,8 +386,9 @@ function setupDrawTools(drawCommandQueue, isDrawTurn) {
         var box = menu.svg.getBBox();
         var xs = box.width / 2, ys = box.height / 2;
         var clamp = (n, a, b) => n < a ? a : n > b ? b : n;
+        var mainContainer = document.getElementById('main-container');
         menu.openAt(
-            clamp(ev.pageX, xs, document.body.offsetWidth - xs),
-            clamp(ev.pageY, ys, document.body.offsetHeight - ys));
+            clamp(ev.pageX, xs, mainContainer.offsetWidth - xs),
+            clamp(ev.pageY, ys, mainContainer.offsetHeight - ys));
     };
 }
