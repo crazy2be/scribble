@@ -219,6 +219,7 @@ window.addEventListener('load', function() {
                 document.getElementById('drawer-id').innerText = drawerID;
                 $('#player' + drawerID).classList.add('drawer');
                 drawing.style.cursor = drawerID === myID ? 'crosshair' : 'not-allowed';
+                canvas.style.background = 'white';
                 break;
             }
             log("Unknown game property", prop, val);
