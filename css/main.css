@@ -94,7 +94,6 @@ h1 {
 }
 #change-name {
     display: flex;
-    font-size: 14px;
 }
 #name-value {
     flex-grow: 1;

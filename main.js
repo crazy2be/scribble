@@ -322,22 +322,36 @@ window.addEventListener('load', function() {
 });
 
 function setupDrawTools(drawCommandQueue, isDrawTurn) {
-    var mouseToCanvas = (mx, my) => {
+    var clientToCanvas = (mx, my) => {
         var rect = canvas.getBoundingClientRect();
         var x = ~~((mx - rect.left) / (rect.width / canvas.width));
         var y = ~~((my - rect.top) / (rect.height / canvas.height));
         return [x, y];
     };
-    canvas.onmousedown = function (ev) {
-        if (ev.button !== 0) return;
-        if (!isDrawTurn()) return;
-        var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
-        drawCommandQueue.add('d,d,' + x + ',' + y);
+    canvas.ontouchstart = (ev) => {
+        if (ev.touches.length === 1) {
+            penDown(...clientToCanvas(ev.touches[0].clientX, ev.touches[0].clientY));
+        } else if (ev.touches.length === 2) {
+            var x = (ev.touches[0].pageX + ev.touches[1].pageX) / 2;
+            var y = (ev.touches[0].pageY + ev.touches[1].pageY) / 2;
+            openToolMenuOnscreen(x, y);
+        }
         ev.preventDefault();
+    };
+    canvas.onmousedown = (ev) => {
+        if (ev.button !== 0) return;
+        penDown(...clientToCanvas(ev.clientX, ev.clientY));
+        ev.preventDefault();
+    };
+    function penDown(x, y) {
+        if (!isDrawTurn()) return;
+        drawCommandQueue.add('d,d,' + x + ',' + y);
         if (['pen', 'eraser'].includes(drawCommandQueue.tool())) {
-            canvas.onmousemove = function (ev) {
+            canvas.onmousemove = penMove;
+            canvas.ontouchmove = (ev) => penMove(ev.changedTouches[0]);
+            function penMove(ev) {
                 if (!isDrawTurn()) return;
-                var [x, y] = mouseToCanvas(ev.clientX, ev.clientY);
+                var [x, y] = clientToCanvas(ev.clientX, ev.clientY);
                 drawCommandQueue.add('d,m,' + x + ',' + y);
             }
         }
@@ -346,6 +360,7 @@ function setupDrawTools(drawCommandQueue, isDrawTurn) {
     // "stuck" down when released outside the canvas, or even outside the window.
     window.onmouseup = function () {
         canvas.onmousemove = null;
+        canvas.ontouchmove = null;
     };
 
     var menu = new radialMenu({spacing: 0, "deg-start": 45});
@@ -378,8 +393,7 @@ function setupDrawTools(drawCommandQueue, isDrawTurn) {
             "onclick": () => {
                 drawCommandQueue.add('d,t,bucket,' + colors[i]);}});
     }
-    canvas.oncontextmenu = function(ev) {
-        ev.preventDefault();
+    function openToolMenuOnscreen(pageX, pageY) {
         if (!isDrawTurn()) return;
         // Prevent us from opening off the edge of the screen.
         menu.open();
@@ -388,7 +402,11 @@ function setupDrawTools(drawCommandQueue, isDrawTurn) {
         var clamp = (n, a, b) => n < a ? a : n > b ? b : n;
         var mainContainer = document.getElementById('main-container');
         menu.openAt(
-            clamp(ev.pageX, xs, mainContainer.offsetWidth - xs),
-            clamp(ev.pageY, ys, mainContainer.offsetHeight - ys));
+            clamp(pageX, xs, mainContainer.offsetWidth - xs),
+            clamp(pageY, ys, mainContainer.offsetHeight - ys));
+    }
+    canvas.oncontextmenu = function(ev) {
+        openToolMenuOnscreen(ev.pageX, ev.pageY);
+        ev.preventDefault();
     };
 }
