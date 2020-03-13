@@ -1,0 +1,6 @@
+To deploy to nearlyfreespeech:
+
+rsync -avr . nfs_scrawl:/home/protected/scrawl
+
+If changes have been made to the server, manually restart
+the server in the nearlyfreespeech.net control panel.
