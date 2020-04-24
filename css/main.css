@@ -99,15 +99,13 @@ h1 {
     flex-grow: 1;
     flex-shrink: 1;
     min-width: 0;
-    padding: 1px 10px;
+    padding: 5px 10px;
     border-radius: 5px;
     background: #ffd331;
     border: 1px solid #a27000;
     color: #755200;
     font-family: 'Righteous', Arial;
-}
-#name-submit {
-    height: 29px;
+    font-size: 18px;
 }
 #start {
     display: block;

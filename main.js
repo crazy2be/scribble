@@ -243,10 +243,6 @@ window.addEventListener('load', function() {
             });
             if (prop === 'name') {
                 div.innerText = id + ' ' + val;
-                if (parseInt(id) === myID) {
-                    log("Successfully set player name to " + val);
-                    nameSubmit.disabled = false;
-                }
             } else if (prop === 'state') {
                 if (val === 'lobby') div.style.color = '#999999';
                 else if (val === 'game') div.style.color = '#000000';
@@ -292,7 +288,6 @@ window.addEventListener('load', function() {
     };
 
     var nameValue = document.getElementById('name-value');
-    var nameSubmit = document.getElementById('name-submit');
     start.onclick = () => {
         log("clicked");
         sock.send('s');
@@ -301,9 +296,7 @@ window.addEventListener('load', function() {
         document.getElementById("change-name").setAttribute("data-visible", "false");
         document.getElementById("join").setAttribute("data-visible", "false");
     };
-    nameSubmit.onclick = () => {
-        log("Setting name '" + nameValue.value + "'");
-        nameSubmit.disabled = true;
+    nameValue.oninput = () => {
         sock.send('p,name,' + nameValue.value);
     };
 
