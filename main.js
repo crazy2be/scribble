@@ -281,7 +281,9 @@ window.addEventListener('load', function() {
             break;
         }
     }
-    sock.onopen = function () {};
+    sock.onopen = function () {
+        sock.send('p,name,' + nameValue.value);
+    };
     sock.onclose = function () {
         log("Disconnected.");
         document.body.style.background = 'red';
