@@ -120,8 +120,8 @@ h1 {
     text-shadow: 1px 1px 2px #fff;
     font-weight: bold;
 }
-#players .drawer:after {
-    content: '🖍️';
+#players .is-drawing-icon,
+#players .is-host-icon {
     float: right;
 }
 #chat {

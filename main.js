@@ -188,13 +188,30 @@ window.addEventListener('load', function() {
     var hostID = -1;
     var drawerID = -1;
     var $ = (q) => document.querySelector(q);
-    var getOrCreate = (id, ctor) => {
+    var getOrCreate = (id, creator) => {
         var el = document.getElementById(id);
         if (el) return el;
-        el = ctor();
-        el.id = id;
-        return el;
+        else    return creator(id);
     };
+    var h = (...args) => {
+        var e;
+        function item(arg) {
+            if (typeof arg === 'string') {
+                if      (arg[0] === '.') e.classList.add(arg.slice(1));
+                else if (arg[0] === '#') e.id = arg.slice(1);
+                else if (e)              e.appendChild(document.createTextNode(arg));
+                else                     e = document.createElement(arg);
+            } else if (arg instanceof Node) {
+                e.appendChild(arg);
+            } else if (typeof arg === 'object') {
+                for (var k in arg) {
+                    e[k] = arg[k];
+                }
+            }
+        }
+        while (args.length) item(args.shift());
+        return e;
+    }
     var drawCommandQueue = new DrawCommandQueue(new Drawer(canvas), sock);
     log('test');
     sock.onmessage = function (ev) {
@@ -208,16 +225,19 @@ window.addEventListener('load', function() {
         case 'g':
             var [prop, val] = split(msg, ',', 2);
             if (prop === 'host') {
+                var prev = $('#player' + hostID);
+                if (prev) prev.querySelector('.is-host-icon').style.visibility = 'none';
                 hostID = parseInt(val);
                 document.getElementById('host-id').innerText = hostID;
+                $('#player' + hostID).querySelector('.is-host-icon').style.visibility = '';
                 if (hostID === myID) start.style.display = '';
                 break;
             } else if (prop === 'drawer') {
                 var prev = $('#player' + drawerID);
-                if (prev) prev.classList.remove('drawer');
+                if (prev) prev.querySelector('.is-drawing-icon').style.visibility = 'none';
                 drawerID = parseInt(val);
                 document.getElementById('drawer-id').innerText = drawerID;
-                $('#player' + drawerID).classList.add('drawer');
+                $('#player' + drawerID).querySelector('.is-drawing-icon').style.visibility = '';
                 drawing.style.cursor = drawerID === myID ? 'crosshair' : 'not-allowed';
                 $('#canvas-overlay').style.visibility = 'hidden';
                 break;
@@ -234,15 +254,19 @@ window.addEventListener('load', function() {
             break;
         case 'p':
             var [id, prop, val] = split(msg, ',', 3);
-            var div = getOrCreate("player" + id, () => {
-                var div = document.createElement("div");
-                div.className = "player";
-                div.style.color = "#999999";
-                players.appendChild(div);
-                return div;
+            var div = getOrCreate("player" + id, (elementID) => {
+                var el =
+                    h('div', '.player', `#${elementID}`,
+                        {style: 'color: #999999'},
+                        h('div', '.is-drawing-icon', {style: 'visibility: hidden'}, '🖍️'),
+                        h('div', '.is-host-icon', {style: 'visibility: hidden'}, '🎙'),
+                        h('div', '.name'),
+                        h('div', {style: 'clear: both'}));
+                players.appendChild(el);
+                return el;
             });
             if (prop === 'name') {
-                div.innerText = id + ' ' + val;
+                div.querySelector('.name').innerText = id + ' ' + val;
             } else if (prop === 'state') {
                 if (val === 'lobby') div.style.color = '#999999';
                 else if (val === 'game') div.style.color = '#000000';
