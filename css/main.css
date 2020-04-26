@@ -124,6 +124,12 @@ h1 {
 #players .is-host-icon {
     float: right;
 }
+#players .player-role-ids {
+    display: flex;
+}
+#players .player-role-ids > span {
+    flex-grow: 1;
+}
 #chat {
     box-sizing: border-box;
     position: relative;
