@@ -139,10 +139,11 @@ h1 {
     flex-direction: column;
     /* HACK: https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336 */
     min-height: 0;
-}
-#chat h2 {
-    margin: 0px 0px 12px 0px;
-    text-align: center;
+    padding: 0;
+    /* Necessary to get border-radius to clip the scrollbar, applying
+       border-radius to our children (which feels better) doesn't seem
+       to work, at least on firefox */
+    overflow: hidden;
 }
 #chat-messages {
     border: 1px solid grey;
@@ -152,6 +153,8 @@ h1 {
     word-wrap: break-word;
     flex-grow: 1;
     min-height: 4em;
+    border: none;
+    padding-top: 8px; /* 8px + 7px = 15px */
 }
 .chat-message {
     padding: 7px 15px;
@@ -162,11 +165,11 @@ h1 {
 #chat-input {
     width: 100%;
 }
-#chat-input > textarea {
+#chat-input textarea {
     width: 100%;
     box-sizing: border-box;
     margin: 0px;
-    padding: 10px;
+    padding: 15px;
     border: none;
     resize: none;
     font-family: Arial;
