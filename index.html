@@ -31,12 +31,15 @@
             <canvas id="canvas" width="640" height="640"></canvas>
             <div id="canvas-overlay">
                 <div class="ui-box">
-                <div id="change-name" data-visible="true">
                     <input id="name-value" placeholder="Anon" maxlength="20" />
-                </div>
-                <div id="join" data-visible="true">
-                    <button id="start" class="input-green">Join</button>
-                </div>
+                    <div id="avatar-drawing">
+                        <span id="avatar-drawing-tools-left"></span>
+                        <canvas id="avatar-drawing-canvas" width="32" height="32"></canvas>
+                        <span id="avatar-drawing-tools-right"></span>
+                    </div>
+                    <div id="join" data-visible="true">
+                        <button id="start" class="input-green">Join</button>
+                    </div>
                 </div>
             </div>
             <div id="canvas-sizer"></div>

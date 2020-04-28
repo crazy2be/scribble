@@ -8,6 +8,26 @@ var log = function(...msg) {
     // TODO: Should only do this if they have not scrolled up
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+var $ = (q) => document.querySelector(q);
+var h = (...args) => {
+    var e;
+    function item(arg) {
+        if (typeof arg === 'string') {
+            if      (arg[0] === '.') e.classList.add(arg.slice(1));
+            else if (arg[0] === '#') e.id = arg.slice(1);
+            else if (e)              e.appendChild(document.createTextNode(arg));
+            else                     e = document.createElement(arg);
+        } else if (arg instanceof Node) {
+            e.appendChild(arg);
+        } else if (typeof arg === 'object') {
+            for (var k in arg) {
+                e[k] = arg[k];
+            }
+        }
+    }
+    while (args.length) item(args.shift());
+    return e;
+};
 class Drawer {
     constructor(canvas) {
         this.canvas = canvas;
@@ -79,7 +99,7 @@ class Drawer {
     }
     run(command) {
         var ctx = this.ctx;
-        var [d, typ, msg] = split(command, ',', 3);
+        var [typ, msg] = split(command, ',', 2);
         switch (typ) {
         case 'm':
             if (!['pen', 'eraser'].includes(this.tool))
@@ -109,7 +129,7 @@ class Drawer {
                 break;
             }
             break;
-        case 'd':
+        case 'down':
             var [x, y] = split(msg, ',', 2).map(c => parseInt(c))
             if (this.tool == 'bucket') {
                 this.bucketFill(x, y, this.bucketColor);
@@ -127,14 +147,13 @@ class Drawer {
         }
     }
     clear() {
-        this.run('d,clear');
-        this.run('d,t,pen');
+        this.run('clear');
+        this.run('t,pen');
     }
 }
 class DrawCommandQueue {
-    constructor(drawer, sock) {
+    constructor(drawer) {
         this.drawer = drawer;
-        this.sock = sock;
         this.clear();
     }
     add(command) {
@@ -142,7 +161,6 @@ class DrawCommandQueue {
         this.times.push(t);
         this.commands.push(command);
         this.drawer.run(command);
-        this.sock.send(command);
     }
     accept(command) {
         var t = +new Date();
@@ -187,32 +205,15 @@ window.addEventListener('load', function() {
     var myID = -1;
     var hostID = -1;
     var drawerID = -1;
-    var $ = (q) => document.querySelector(q);
     var getOrCreate = (id, creator) => {
         var el = document.getElementById(id);
         if (el) return el;
         else    return creator(id);
     };
-    var h = (...args) => {
-        var e;
-        function item(arg) {
-            if (typeof arg === 'string') {
-                if      (arg[0] === '.') e.classList.add(arg.slice(1));
-                else if (arg[0] === '#') e.id = arg.slice(1);
-                else if (e)              e.appendChild(document.createTextNode(arg));
-                else                     e = document.createElement(arg);
-            } else if (arg instanceof Node) {
-                e.appendChild(arg);
-            } else if (typeof arg === 'object') {
-                for (var k in arg) {
-                    e[k] = arg[k];
-                }
-            }
-        }
-        while (args.length) item(args.shift());
-        return e;
-    }
+
     var drawCommandQueue = new DrawCommandQueue(new Drawer(canvas), sock);
+    var avatarCanvas = $('#avatar-drawing-canvas');
+    var avatarDrawCommandQueue = new DrawCommandQueue(new Drawer(avatarCanvas), sock);
     log('test');
     sock.onmessage = function (ev) {
         //console.log("Got msg", ev.data);
@@ -258,6 +259,7 @@ window.addEventListener('load', function() {
                 var el =
                     h('div', '.player', `#${elementID}`,
                         {style: 'color: #999999'},
+                        h('canvas', '.avatar', {width: 32, height: 32}),
                         h('div', '.is-drawing-icon', {style: 'visibility: hidden'}, '🖍️'),
                         h('div', '.is-host-icon', {style: 'visibility: hidden'}, '🎙'),
                         h('div', '.name'),
@@ -271,6 +273,13 @@ window.addEventListener('load', function() {
                 if (val === 'lobby') div.style.color = '#999999';
                 else if (val === 'game') div.style.color = '#000000';
                 else log("Unknown player state", id, val);
+            } else if (prop === 'd') {
+                if (id === myID) {
+                    avatarDrawCommandQueue.accept(val);
+                } else {
+                    //var theirCanvas = div.querySelector('.avatar')
+                    //new Drawer(theirCanvas).run(val);
+                }
             } else {
                 log("Unknown player property", id, prop, val);
             }
@@ -281,7 +290,7 @@ window.addEventListener('load', function() {
             div.parentNode.removeChild(div);
             break;
         case 'd':
-            drawCommandQueue.accept(ev.data);
+            drawCommandQueue.accept(msg);
             break;
         case 'e':
             drawCommandQueue.clear();
@@ -319,8 +328,8 @@ window.addEventListener('load', function() {
         sock.send('s');
         start.disabled = true;
         start.onclick = null;
-        document.getElementById("change-name").setAttribute("data-visible", "false");
-        document.getElementById("join").setAttribute("data-visible", "false");
+        nameValue.disabled = true;
+        join.disabled = true;
     };
     nameValue.oninput = () => {
         sock.send('p,name,' + nameValue.value);
@@ -337,19 +346,28 @@ window.addEventListener('load', function() {
         }
     };
 
-    setupDrawTools(drawCommandQueue, () => myID === drawerID);
+    setupDrawTools(drawCommandQueue, avatarDrawCommandQueue, sock, () => myID === drawerID);
 });
 
-function setupDrawTools(drawCommandQueue, isDrawTurn) {
-    var clientToCanvas = (mx, my) => {
+function setupDrawTools(drawCommandQueue, avatarDrawCommandQueue, sock, isDrawTurn) {
+    var sendDrawCmd = (cmd) => {
+        drawCommandQueue.add(cmd);
+        sock.send('d,' + cmd);
+    };
+    var sendAvatarDrawCmd = (cmd) => {
+        avatarDrawCommandQueue.add(cmd);
+        sock.send('p,d,' + cmd);
+    }
+    var clientToCanvas = (canvas, {clientX, clientY}) => {
         var rect = canvas.getBoundingClientRect();
-        var x = ~~((mx - rect.left) / (rect.width / canvas.width));
-        var y = ~~((my - rect.top) / (rect.height / canvas.height));
+        var x = ~~((clientX - rect.left) / (rect.width / canvas.width));
+        var y = ~~((clientY - rect.top) / (rect.height / canvas.height));
         return [x, y];
     };
+    var avatarCanvas = $('#avatar-drawing-canvas');
     canvas.ontouchstart = (ev) => {
         if (ev.touches.length === 1) {
-            penDown(...clientToCanvas(ev.touches[0].clientX, ev.touches[0].clientY));
+            penDown(canvas, sendDrawCmd, ...clientToCanvas(canvas, ev.touches[0]));
         } else if (ev.touches.length === 2) {
             var x = (ev.touches[0].pageX + ev.touches[1].pageX) / 2;
             var y = (ev.touches[0].pageY + ev.touches[1].pageY) / 2;
@@ -359,38 +377,45 @@ function setupDrawTools(drawCommandQueue, isDrawTurn) {
     };
     canvas.onmousedown = (ev) => {
         if (ev.button !== 0) return;
-        penDown(...clientToCanvas(ev.clientX, ev.clientY));
+        penDown(canvas, sendDrawCmd, ...clientToCanvas(canvas, ev));
         ev.preventDefault();
     };
-    function penDown(x, y) {
-        if (!isDrawTurn()) return;
-        drawCommandQueue.add('d,d,' + x + ',' + y);
-        if (['pen', 'eraser'].includes(drawCommandQueue.tool())) {
+    avatarCanvas.onmousedown = (ev) => {
+        if (ev.button !== 0) return;
+        penDown(avatarCanvas, sendAvatarDrawCmd, ...clientToCanvas(avatarCanvas, ev));
+        ev.preventDefault();
+    };
+    function penDown(canvas, sendDrawCmd, x, y) {
+        //if (!isDrawTurn()) return;
+        console.log("down", x, y);
+        sendDrawCmd('down,' + x + ',' + y);
+        //if (['pen', 'eraser'].includes(drawCommandQueue.tool())) {
             canvas.onmousemove = penMove;
             canvas.ontouchmove = (ev) => penMove(ev.changedTouches[0]);
             function penMove(ev) {
-                if (!isDrawTurn()) return;
-                var [x, y] = clientToCanvas(ev.clientX, ev.clientY);
-                drawCommandQueue.add('d,m,' + x + ',' + y);
+                //if (!isDrawTurn()) return;
+                console.log("move", x, y);
+                var [x, y] = clientToCanvas(canvas, ev);
+                sendDrawCmd('m,' + x + ',' + y);
             }
-        }
+        //}
     };
     // Window, as opposed to canvas, in order to prevent the mouse from getting
     // "stuck" down when released outside the canvas, or even outside the window.
     window.onmouseup = function () {
         canvas.onmousemove = null;
         canvas.ontouchmove = null;
+        avatarCanvas.onmousemove = null;
     };
-
     var menu = new radialMenu({spacing: 0, "deg-start": 45});
     document.onclick = () => { menu.close(); };
     menu.add("🗑", {"onclick": () => {
-        drawCommandQueue.add('d,clear');
-        drawCommandQueue.add('d,t,pen,#OOOOOO');
+        sendDrawCmd('clear');
+        sendDrawCmd('t,pen,#OOOOOO');
         colorItems[0].open();
     }}); // Trash can => delete
     menu.add("⏥", {"text-style": "fill: pink", "onclick": () => {
-        drawCommandQueue.add('d,t,eraser');
+        sendDrawCmd('t,eraser');
     }});
     var bucket = menu.add('b', {onclick: (ev) => {bucket.open(); ev.stopPropagation()}});
     var colors = [
@@ -399,18 +424,28 @@ function setupDrawTools(drawCommandQueue, isDrawTurn) {
         "#005510", "#00B2FF", "#00569E", "#231FD3", "#0E0865", "#A300BA",
         "#550069", "#D37CAA", "#A75574", "#A0522D", "#63300D",
     ]
+    var avatarToolsLeft = $('#avatar-drawing-tools-left');
+    var avatarToolsRight = $('#avatar-drawing-tools-right');
+    avatarToolsLeft.appendChild(h('div', '.avatar-tool', '.primary-tool', '🗑',
+        {onclick: () => { }}));
+    avatarToolsRight.appendChild(h('div', '.avatar-tool', '.primary-tool', '⏥'));
     var colorItems = [];
     for (let i = 0; i < colors.length; i++) {
         colorItems.push(menu.add("", {
             "size": 0.4,
             "background-style": "fill: " + colors[i],
             "onclick": () => {
-                drawCommandQueue.add('d,t,pen,' + colors[i]);
+                sendDrawCmd('t,pen,' + colors[i]);
             }}));
         bucket.add("", {
             "background-style": "fill: " + colors[i],
             "onclick": () => {
-                drawCommandQueue.add('d,t,bucket,' + colors[i]);}});
+                sendDrawCmd('t,bucket,' + colors[i]);}});
+
+        var avatarTool = h('div', '.avatar-tool', {
+            style: `background-color: ${colors[i]}`,
+            onclick: () => { sendAvatarDrawCmd('t,pen,' + colors[i]); }});
+        (i < colors.length/2 ? avatarToolsLeft : avatarToolsRight).appendChild(avatarTool);
     }
     function openToolMenuOnscreen(pageX, pageY) {
         if (!isDrawTurn()) return;

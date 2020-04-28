@@ -48,6 +48,72 @@ h1 {
     padding-right: 25%;
     background: rgba(0, 0, 0, 0.6);
 }
+#canvas-overlay .ui-box {
+    display: flex;
+    flex-direction: column;
+}
+#canvas-overlay #avatar-drawing {
+    display: flex;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    background: white;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid #7d7d7d;
+}
+#canvas-overlay #avatar-drawing-canvas {
+    /* Setting width and height relative to the viewport like this is a bit
+       of a hack, but seems to work pretty well in my testing, so (shrug).
+       See https://stackoverflow.com/a/23673392/380725 */
+    width: 20vw;
+    height: 20vw;
+
+    box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75) inset;
+}
+#avatar-drawing-tools-left,
+#avatar-drawing-tools-right {
+    display: flex;
+    flex-direction: column;
+    width: 16px;
+}
+#canvas-overlay .avatar-tool {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 10%;
+}
+#canvas-overlay .avatar-tool:hover {
+    transform: scaleX(2.0) scaleY(1.1);
+    box-shadow: 0px 0px 2px 0px rgba(0,0,0,0.75);
+    border-radius: 2px;
+}
+#canvas-overlay .primary-tool {
+    background-color: #eeeeee;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    flex-basis: 20%;
+    text-align: center;
+}
+#canvas-overlay #name-value {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background: #ffd331;
+    border: 1px solid #a27000;
+    color: #755200;
+    font-family: 'Righteous', Arial;
+    font-size: 18px;
+}
+#canvas-overlay #start {
+    display: block;
+    width: 100%;
+    height: 40px;
+    font-size: 18px;
+}
 #canvas {
     width: 100%; height: 100%;
     background: white;
@@ -82,7 +148,6 @@ h1 {
     display: none;
 }
 
-#change-name,
 #word,
 #player,
 #players {
@@ -90,27 +155,6 @@ h1 {
 }
 #word {
     font-family: 'Righteous', Arial;
-    font-size: 18px;
-}
-#change-name {
-    display: flex;
-}
-#name-value {
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-width: 0;
-    padding: 5px 10px;
-    border-radius: 5px;
-    background: #ffd331;
-    border: 1px solid #a27000;
-    color: #755200;
-    font-family: 'Righteous', Arial;
-    font-size: 18px;
-}
-#start {
-    display: block;
-    width: 100%;
-    height: 40px;
     font-size: 18px;
 }
 #players {
@@ -123,6 +167,9 @@ h1 {
 #players .is-drawing-icon,
 #players .is-host-icon {
     float: right;
+}
+#players .avatar {
+    float: left;
 }
 #players .player-role-ids {
     display: flex;
